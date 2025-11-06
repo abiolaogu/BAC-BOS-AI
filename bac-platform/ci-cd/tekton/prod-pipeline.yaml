@@ -1,0 +1,69 @@
+apiVersion: tekton.dev/v1beta1
+kind: Pipeline
+metadata:
+  name: go-prod-pipeline
+spec:
+  workspaces:
+    - name: shared-workspace
+  params:
+    - name: repo-url
+      type: string
+    - name: image-name
+      type: string
+    - name: image-tag
+      type: string
+    - name: manifest-repo
+      type: string
+  tasks:
+    - name: fetch-source
+      taskRef:
+        name: git-clone
+      workspaces:
+        - name: output
+          workspace: shared-workspace
+      params:
+        - name: url
+          value: $(params.repo-url)
+    - name: build
+      taskRef:
+        name: go-build
+      runAfter:
+        - fetch-source
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: image
+          value: "$(params.image-name):$(params.image-tag)"
+    - name: test
+      taskRef:
+        name: go-test
+      runAfter:
+        - build
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+    - name: security-scan
+      taskRef:
+        name: security-scan
+      runAfter:
+        - build
+      params:
+        - name: image
+          value: "$(params.image-name):$(params.image-tag)"
+    - name: update-manifest
+      taskRef:
+        name: update-manifest
+      runAfter:
+        - test
+        - security-scan
+      workspaces:
+        - name: source
+          workspace: shared-workspace
+      params:
+        - name: manifest_repo
+          value: $(params.manifest-repo)
+        - name: image_name
+          value: $(params.image-name)
+        - name: image_tag
+          value: $(params.image-tag)

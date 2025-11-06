@@ -1,0 +1,19 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: deploy
+spec:
+  params:
+    - name: manifest_dir
+      description: The directory containing the Kubernetes manifests
+      default: ./kubernetes
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  steps:
+    - name: deploy
+      image: bitnami/kubectl:latest
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        kubectl apply -f $(params.manifest_dir)

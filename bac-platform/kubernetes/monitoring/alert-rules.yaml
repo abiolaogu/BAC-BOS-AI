@@ -1,0 +1,11 @@
+groups:
+- name: hello-world
+  rules:
+  - alert: HelloWorldDown
+    expr: up{job="hello-world"} == 0
+    for: 1m
+    labels:
+      severity: critical
+    annotations:
+      summary: "Hello World is down"
+      description: "The Hello World service is down for more than 1 minute."

@@ -1,0 +1,10 @@
+global:
+  pagerduty_url: https://events.pagerduty.com/v2/enqueue
+
+route:
+  receiver: 'pagerduty-receiver'
+
+receivers:
+- name: 'pagerduty-receiver'
+  pagerduty_configs:
+  - routing_key: KEY

@@ -1,0 +1,29 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: update-manifest
+spec:
+  params:
+    - name: manifest_repo
+      description: The git repository containing the Kubernetes manifests
+    - name: image_name
+      description: The name of the image to update
+    - name: image_tag
+      description: The new image tag
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  steps:
+    - name: update
+      image: alpine/git
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env sh
+        git clone $(params.manifest_repo) manifest-repo
+        cd manifest-repo
+        # This is a placeholder for a more robust manifest update mechanism
+        # For example, using kustomize or a similar tool
+        sed -i "s|image: $(params.image_name):.*|image: $(params.image_name):$(params.image_tag)|" deployment.yaml
+        git add .
+        git commit -m "Update image to $(params.image_name):$(params.image_tag)"
+        git push

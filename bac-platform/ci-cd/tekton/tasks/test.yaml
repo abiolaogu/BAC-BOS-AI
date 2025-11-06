@@ -1,0 +1,15 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: go-test
+spec:
+  workspaces:
+    - name: source
+      description: The workspace containing the source code
+  steps:
+    - name: test
+      image: golang:1.21
+      workingDir: $(workspaces.source.path)
+      script: |
+        #!/usr/bin/env bash
+        go test ./...

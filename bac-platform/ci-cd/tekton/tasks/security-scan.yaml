@@ -1,0 +1,14 @@
+apiVersion: tekton.dev/v1beta1
+kind: Task
+metadata:
+  name: security-scan
+spec:
+  params:
+    - name: image
+      description: The name of the image to scan
+  steps:
+    - name: scan
+      image: aquasec/trivy:latest
+      args:
+        - "image"
+        - "$(params.image)"
