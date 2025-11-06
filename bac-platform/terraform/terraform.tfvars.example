@@ -1,0 +1,15 @@
+# Rancher
+rancher_api_url = "https://your-rancher-api-url"
+rancher_token_key = "your-rancher-token"
+
+# AWS
+aws_region = "us-east-1"
+aws_ssh_allowed_cidr = "0.0.0.0/0" # Replace with your IP address for SSH access
+
+# Vultr
+vultr_api_key = "your-vultr-api-key"
+
+# OVH
+ovh_application_key = "your-ovh-app-key"
+ovh_application_secret = "your-ovh-app-secret"
+ovh_consumer_key = "your-ovh-consumer-key"
