@@ -1,0 +1,19 @@
+apiVersion: networking.istio.io/v1alpha3
+kind: VirtualService
+metadata:
+  name: default-route
+  namespace: istio-system
+spec:
+  hosts:
+  - "*"
+  gateways:
+  - bac-gateway
+  http:
+  - match:
+    - uri:
+        prefix: "/"
+    route:
+    - destination:
+        host: "default-backend.default.svc.cluster.local"
+        port:
+          number: 80

@@ -1,0 +1,18 @@
+apiVersion: argoproj.io/v1alpha1
+kind: Application
+metadata:
+  name: bac-services-api
+  namespace: argocd
+spec:
+  project: default
+  source:
+    repoURL: 'https://github.com/abiolaogu/BAC-BOS-AI.git'
+    targetRevision: HEAD
+    path: bac-platform/services/api/k8s
+  destination:
+    server: 'https://kubernetes.default.svc'
+    namespace: services
+  syncPolicy:
+    automated:
+      prune: true
+      selfHeal: true

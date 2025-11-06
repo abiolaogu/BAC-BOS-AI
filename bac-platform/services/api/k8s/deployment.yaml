@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bac-services-api
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bac-services-api
+  template:
+    metadata:
+      labels:
+        app: bac-services-api
+    spec:
+      containers:
+      - name: bac-services-api
+        image: your-image-repo/bac-services-api:latest # Replace with your image
+        ports:
+        - containerPort: 8080

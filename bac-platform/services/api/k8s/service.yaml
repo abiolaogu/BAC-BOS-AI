@@ -1,0 +1,11 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: bac-services-api
+spec:
+  selector:
+    app: bac-services-api
+  ports:
+  - protocol: TCP
+    port: 80
+    targetPort: 8080

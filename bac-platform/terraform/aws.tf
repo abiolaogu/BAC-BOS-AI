@@ -1,113 +1,86 @@
+# AWS VPC (existing)
 
-# AWS VPC
-resource "aws_vpc" "bac_vpc" {
-  cidr_block = "10.0.0.0/16"
-  enable_dns_support = true
-  enable_dns_hostnames = true
-  tags = {
-    Name = "bac-vpc"
+# AWS Node Templates
+resource "rancher2_node_template" "aws_general" {
+  name = "aws-general-template"
+  amazonec2_config {
+    instance_type = var.aws_general_instance_type
+    region        = var.aws_region
+    # ... other necessary AWS configurations
   }
 }
 
-# AWS Internet Gateway
-resource "aws_internet_gateway" "bac_igw" {
-  vpc_id = aws_vpc.bac_vpc.id
-  tags = {
-    Name = "bac-igw"
+resource "rancher2_node_template" "aws_compute" {
+  name = "aws-compute-template"
+  amazonec2_config {
+    instance_type = var.aws_compute_instance_type
+    region        = var.aws_region
+    spot_price    = var.aws_use_spot_instances_compute ? "0.5" : ""
+    # ... other necessary AWS configurations
   }
 }
 
-# AWS Public Subnet
-resource "aws_subnet" "bac_public_subnet" {
-  vpc_id     = aws_vpc.bac_vpc.id
-  cidr_block = "10.0.1.0/24"
-  map_public_ip_on_launch = true
-  availability_zone = "${var.aws_region}a" # Use the first AZ in the region
-  tags = {
-    Name = "bac-public-subnet"
+resource "rancher2_node_template" "aws_memory" {
+  name = "aws-memory-template"
+  amazonec2_config {
+    instance_type = var.aws_memory_instance_type
+    region        = var.aws_region
+    spot_price    = var.aws_use_spot_instances_memory ? "0.5" : ""
+    # ... other necessary AWS configurations
   }
 }
 
-# AWS Route Table
-resource "aws_route_table" "bac_public_rt" {
-  vpc_id = aws_vpc.bac_vpc.id
+# AWS Node Pools
+resource "rancher2_node_pool" "aws_general_pool" {
+  cluster_id       = rancher2_cluster.bac_cluster.id
+  name             = "aws-general"
+  node_template_id = rancher2_node_template.aws_general.id
+  quantity         = 3
+  control_plane    = true
+  etcd             = true
+  worker           = false
 
-  route {
-    cidr_block = "0.0.0.0/0"
-    gateway_id = aws_internet_gateway.bac_igw.id
+  labels = {
+    "node-role" = "general"
   }
 
-  tags = {
-    Name = "bac-public-rt"
+  taints = [local.general_taint]
+}
+
+resource "rancher2_node_pool" "aws_compute_pool" {
+  cluster_id       = rancher2_cluster.bac_cluster.id
+  name             = "aws-compute"
+  node_template_id = rancher2_node_template.aws_compute.id
+  quantity         = 5
+  worker           = true
+
+  labels = {
+    "node-role" = "compute"
+  }
+
+  taints = [local.compute_taint]
+
+  autoscaling_config {
+    min_quantity = 3
+    max_quantity = 100
   }
 }
 
-# AWS Route Table Association
-resource "aws_route_table_association" "bac_public_rta" {
-  subnet_id      = aws_subnet.bac_public_subnet.id
-  route_table_id = aws_route_table.bac_public_rt.id
-}
+resource "rancher2_node_pool" "aws_memory_pool" {
+  cluster_id       = rancher2_cluster.bac_cluster.id
+  name             = "aws-memory"
+  node_template_id = rancher2_node_template.aws_memory.id
+  quantity         = 3
+  worker           = true
 
-
-# AWS Security Group for Kubernetes Nodes
-resource "aws_security_group" "k8s_nodes" {
-  name        = "bac-k8s-nodes"
-  description = "Security group for BAC Platform Kubernetes nodes"
-  vpc_id      = aws_vpc.bac_vpc.id # Associate with our VPC
-
-  # Inbound rules
-  ingress {
-    description = "Allow SSH from trusted source"
-    from_port   = 22
-    to_port     = 22
-    protocol    = "tcp"
-    cidr_blocks = [var.aws_ssh_allowed_cidr]
+  labels = {
+    "node-role" = "memory"
   }
 
-  ingress {
-    description = "Allow all traffic from within the security group"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    self        = true
-  }
+  taints = [local.memory_taint]
 
-  # K8s API server from nodes
-  ingress {
-    description = "Allow K8s API server from nodes"
-    from_port   = 6443
-    to_port     = 6443
-    protocol    = "tcp"
-    self        = true
-  }
-
-  # Canal/Flannel networking
-  ingress {
-    description = "Allow Canal/Flannel UDP"
-    from_port   = 8472
-    to_port     = 8472
-    protocol    = "udp"
-    self        = true
-  }
-  
-  # Required for node-to-node pod communication
-  ingress {
-    from_port = 0
-    to_port   = 0
-    protocol  = "-1"
-    cidr_blocks = [aws_vpc.bac_vpc.cidr_block]
-  }
-
-  # Outbound rules
-  egress {
-    description = "Allow all outbound traffic"
-    from_port   = 0
-    to_port     = 0
-    protocol    = "-1"
-    cidr_blocks = ["0.0.0.0/0"]
-  }
-
-  tags = {
-    Name = "bac-k8s-nodes"
+  autoscaling_config {
+    min_quantity = 2
+    max_quantity = 50
   }
 }

@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bac-services-web
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bac-services-web
+  template:
+    metadata:
+      labels:
+        app: bac-services-web
+    spec:
+      containers:
+      - name: bac-services-web
+        image: your-image-repo/bac-services-web:latest # Replace with your image
+        ports:
+        - containerPort: 8080

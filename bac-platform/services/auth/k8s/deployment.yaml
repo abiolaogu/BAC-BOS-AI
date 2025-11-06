@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bac-services-auth
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bac-services-auth
+  template:
+    metadata:
+      labels:
+        app: bac-services-auth
+    spec:
+      containers:
+      - name: bac-services-auth
+        image: your-image-repo/bac-services-auth:latest # Replace with your image
+        ports:
+        - containerPort: 8080
