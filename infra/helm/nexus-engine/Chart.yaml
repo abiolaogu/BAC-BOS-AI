@@ -1,0 +1,14 @@
+apiVersion: v2
+name: nexus-engine
+description: NEXUS instant business activation engine
+type: application
+version: 1.0.0
+appVersion: "1.0.0"
+keywords:
+  - nexus
+  - business
+  - provisioning
+  - automation
+maintainers:
+  - name: NEXUS Team
+    email: dev@nexus.bos

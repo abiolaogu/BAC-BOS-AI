@@ -1,0 +1,98 @@
+{
+  "business_name": "HealthBridge Clinic",
+  "preferred_domains": ["healthbridge.ng"],
+  "region": "NG",
+  "currency": "NGN",
+  "industry": "healthcare",
+  "team_size": 25,
+  "channels": [
+    "web",
+    "mobile_app",
+    "whatsapp",
+    "voice"
+  ],
+  "products_or_services": [
+    {
+      "name": "General Consultation",
+      "type": "service",
+      "price": 8000,
+      "category": "Medical Services"
+    },
+    {
+      "name": "Pediatric Consultation",
+      "type": "service",
+      "price": 10000,
+      "category": "Medical Services"
+    },
+    {
+      "name": "Laboratory Tests - Full Blood Count",
+      "type": "service",
+      "price": 5000,
+      "category": "Diagnostics"
+    },
+    {
+      "name": "X-Ray Scan",
+      "type": "service",
+      "price": 15000,
+      "category": "Radiology"
+    },
+    {
+      "name": "Telemedicine Consultation",
+      "type": "service",
+      "price": 5000,
+      "category": "Virtual Care"
+    }
+  ],
+  "payments": [
+    "Paystack",
+    "Flutterwave",
+    "Stripe"
+  ],
+  "messaging": [
+    "WhatsApp",
+    "Twilio"
+  ],
+  "email_delivery": [
+    "Postmark",
+    "SES"
+  ],
+  "kyc_tax": [
+    "Sumsub"
+  ],
+  "data_residency": "single_region",
+  "compliance": [
+    "hipaa",
+    "ndpa_ng",
+    "gdpr"
+  ],
+  "ai_prefs": {
+    "model_provider": "anthropic",
+    "retrieval": "vector+docdb",
+    "guardrails": true,
+    "pii_scrubbing": true
+  },
+  "features": {
+    "crm": true,
+    "support": true,
+    "finance": true,
+    "hr": true,
+    "patient_mgmt": true
+  },
+  "deployment": {
+    "mode": "nexus_cloud",
+    "tier": "enterprise",
+    "high_availability": true,
+    "auto_scaling": true,
+    "backup_retention_days": 90
+  },
+  "contacts": {
+    "admin_email": "admin@healthbridge.ng",
+    "billing_email": "billing@healthbridge.ng",
+    "support_email": "support@healthbridge.ng"
+  },
+  "branding": {
+    "primary_color": "#0EA5E9",
+    "secondary_color": "#10B981",
+    "font_family": "Inter"
+  }
+}

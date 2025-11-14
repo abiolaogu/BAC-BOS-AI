@@ -1,0 +1,592 @@
+{
+  "$schema": "http://json-schema.org/draft-07/schema#",
+  "$id": "https://nexus.bos/schemas/business-activation-input.json",
+  "title": "NEXUS Business Activation Input",
+  "description": "Schema for activating a complete business stack via NEXUS instant provisioning",
+  "type": "object",
+  "required": [
+    "business_name",
+    "industry",
+    "region",
+    "currency"
+  ],
+  "properties": {
+    "business_name": {
+      "type": "string",
+      "description": "Legal business name",
+      "minLength": 2,
+      "maxLength": 100,
+      "examples": ["Acme Trading Ltd", "HealthCare Plus", "EduTech Solutions"]
+    },
+    "preferred_domains": {
+      "type": "array",
+      "description": "Preferred domain names (will be validated for availability)",
+      "items": {
+        "type": "string",
+        "format": "hostname"
+      },
+      "minItems": 1,
+      "maxItems": 5,
+      "examples": [["acmetrading.com", "acmetrading.ng"]]
+    },
+    "region": {
+      "type": "string",
+      "description": "Primary data residency region",
+      "enum": ["NG", "ZA", "KE", "GH", "US", "EU", "UK", "SG", "AE", "multi"],
+      "examples": ["NG"]
+    },
+    "currency": {
+      "type": "string",
+      "description": "Primary business currency (ISO 4217)",
+      "enum": ["NGN", "USD", "EUR", "GBP", "ZAR", "KES", "GHS", "AED", "SGD"],
+      "examples": ["NGN"]
+    },
+    "industry": {
+      "type": "string",
+      "description": "Primary industry vertical",
+      "enum": [
+        "ecommerce",
+        "retail",
+        "healthcare",
+        "logistics",
+        "shipping",
+        "media",
+        "streaming",
+        "education",
+        "religion",
+        "nonprofit",
+        "oil_gas",
+        "energy",
+        "telco",
+        "cpaas",
+        "ucaas",
+        "saas",
+        "fintech",
+        "banking",
+        "insurance",
+        "manufacturing",
+        "hospitality",
+        "real_estate",
+        "government",
+        "mdb",
+        "professional_services",
+        "consulting",
+        "agriculture",
+        "mining"
+      ],
+      "examples": ["ecommerce"]
+    },
+    "team_size": {
+      "type": "integer",
+      "description": "Number of employees/users",
+      "minimum": 1,
+      "maximum": 100000,
+      "examples": [12]
+    },
+    "channels": {
+      "type": "array",
+      "description": "Sales and communication channels to activate",
+      "items": {
+        "type": "string",
+        "enum": [
+          "web",
+          "mobile_app",
+          "whatsapp",
+          "email",
+          "sms",
+          "voice",
+          "video",
+          "pos",
+          "kiosk",
+          "marketplaces",
+          "social",
+          "chat"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "examples": [["web", "whatsapp", "email", "pos"]]
+    },
+    "products_or_services": {
+      "type": "array",
+      "description": "Initial catalog of products or services",
+      "items": {
+        "type": "object",
+        "required": ["name", "type"],
+        "properties": {
+          "name": {
+            "type": "string",
+            "minLength": 1,
+            "maxLength": 200
+          },
+          "type": {
+            "type": "string",
+            "enum": ["product", "service", "subscription", "bundle", "digital"]
+          },
+          "price": {
+            "type": "number",
+            "minimum": 0
+          },
+          "sku": {
+            "type": "string"
+          },
+          "category": {
+            "type": "string"
+          },
+          "description": {
+            "type": "string",
+            "maxLength": 1000
+          }
+        }
+      },
+      "maxItems": 1000,
+      "examples": [[{
+        "name": "Organic Coffee Beans",
+        "type": "product",
+        "price": 2500,
+        "category": "Beverages",
+        "sku": "COFFEE-ORG-001"
+      }]]
+    },
+    "payments": {
+      "type": "array",
+      "description": "Payment gateways to integrate",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Stripe",
+          "Paystack",
+          "Flutterwave",
+          "Square",
+          "PayPal",
+          "Razorpay",
+          "Mollie",
+          "Adyen",
+          "2Checkout",
+          "Authorize.net",
+          "Interswitch",
+          "MTN_MoMo",
+          "Vodacom_Mpesa",
+          "Safaricom_Mpesa"
+        ]
+      },
+      "uniqueItems": true,
+      "minItems": 1,
+      "examples": [["Paystack", "Flutterwave", "Stripe"]]
+    },
+    "messaging": {
+      "type": "array",
+      "description": "Messaging and communications providers",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Twilio",
+          "WhatsApp",
+          "Infobip",
+          "AfricasTalking",
+          "SMPP",
+          "Vonage",
+          "MessageBird",
+          "Plivo",
+          "Bandwidth",
+          "Telnyx"
+        ]
+      },
+      "uniqueItems": true,
+      "examples": [["Twilio", "WhatsApp"]]
+    },
+    "email_delivery": {
+      "type": "array",
+      "description": "Email service providers",
+      "items": {
+        "type": "string",
+        "enum": [
+          "SES",
+          "Postmark",
+          "Sendgrid",
+          "Mailgun",
+          "SparkPost",
+          "Mandrill",
+          "Sendinblue",
+          "Elastic_Email",
+          "SelfHosted_Stalwart"
+        ]
+      },
+      "uniqueItems": true,
+      "examples": [["Postmark", "SES"]]
+    },
+    "kyc_tax": {
+      "type": "array",
+      "description": "KYC/AML and tax compliance providers",
+      "items": {
+        "type": "string",
+        "enum": [
+          "Sumsub",
+          "Trulioo",
+          "Onfido",
+          "Jumio",
+          "TaxJar",
+          "Avalara",
+          "Vertex",
+          "Sovos"
+        ]
+      },
+      "uniqueItems": true,
+      "examples": [["Sumsub", "TaxJar"]]
+    },
+    "data_residency": {
+      "type": "string",
+      "description": "Data residency strategy",
+      "enum": ["single_region", "multi_region", "geo_distributed"],
+      "default": "single_region",
+      "examples": ["single_region"]
+    },
+    "compliance": {
+      "type": "array",
+      "description": "Compliance frameworks to enable",
+      "items": {
+        "type": "string",
+        "enum": [
+          "gdpr",
+          "hipaa",
+          "sox",
+          "pci_dss",
+          "ndpa_ng",
+          "popia_za",
+          "ccpa",
+          "iso27001",
+          "soc2",
+          "fedramp"
+        ]
+      },
+      "uniqueItems": true,
+      "examples": [["gdpr", "ndpa_ng", "pci_dss"]]
+    },
+    "ai_prefs": {
+      "type": "object",
+      "description": "AI/ML preferences",
+      "properties": {
+        "model_provider": {
+          "type": "string",
+          "enum": ["openai", "anthropic", "google", "meta", "hybrid", "open"],
+          "default": "hybrid",
+          "description": "Primary AI model provider (hybrid = multi-model routing)"
+        },
+        "retrieval": {
+          "type": "string",
+          "enum": ["vector", "vector+docdb", "graph", "full"],
+          "default": "vector+docdb",
+          "description": "RAG retrieval strategy"
+        },
+        "guardrails": {
+          "type": "boolean",
+          "default": true,
+          "description": "Enable AI safety guardrails"
+        },
+        "pii_scrubbing": {
+          "type": "boolean",
+          "default": true,
+          "description": "Auto-scrub PII from AI prompts"
+        },
+        "fine_tuning": {
+          "type": "boolean",
+          "default": false,
+          "description": "Enable model fine-tuning on tenant data"
+        }
+      }
+    },
+    "features": {
+      "type": "object",
+      "description": "Feature toggles (optional, auto-enabled based on industry)",
+      "properties": {
+        "crm": {
+          "type": "boolean",
+          "default": true
+        },
+        "marketing": {
+          "type": "boolean",
+          "default": true
+        },
+        "support": {
+          "type": "boolean",
+          "default": true
+        },
+        "finance": {
+          "type": "boolean",
+          "default": true
+        },
+        "hr": {
+          "type": "boolean",
+          "default": true
+        },
+        "projects": {
+          "type": "boolean",
+          "default": true
+        },
+        "ecommerce": {
+          "type": "boolean",
+          "default": false,
+          "description": "Auto-enabled for ecommerce/retail industries"
+        },
+        "pos": {
+          "type": "boolean",
+          "default": false
+        },
+        "inventory": {
+          "type": "boolean",
+          "default": false
+        },
+        "fleet": {
+          "type": "boolean",
+          "default": false,
+          "description": "Fleet management (logistics industry)"
+        },
+        "patient_mgmt": {
+          "type": "boolean",
+          "default": false,
+          "description": "Patient management (healthcare industry)"
+        },
+        "lms": {
+          "type": "boolean",
+          "default": false,
+          "description": "Learning management (education industry)"
+        },
+        "streaming": {
+          "type": "boolean",
+          "default": false,
+          "description": "Media streaming (media industry)"
+        },
+        "field_ops": {
+          "type": "boolean",
+          "default": false,
+          "description": "Field operations (oil & gas industry)"
+        }
+      }
+    },
+    "integrations": {
+      "type": "object",
+      "description": "Third-party integrations (optional)",
+      "properties": {
+        "accounting": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["QuickBooks", "Xero", "Sage", "FreshBooks"]
+          }
+        },
+        "crm": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Salesforce", "HubSpot", "Pipedrive"]
+          },
+          "description": "Import data from existing CRM"
+        },
+        "marketing": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Mailchimp", "Constant_Contact", "ActiveCampaign"]
+          }
+        },
+        "storage": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Dropbox", "Google_Drive", "OneDrive", "Box"]
+          }
+        },
+        "calendars": {
+          "type": "array",
+          "items": {
+            "type": "string",
+            "enum": ["Google_Calendar", "Outlook_Calendar", "Apple_Calendar"]
+          }
+        }
+      }
+    },
+    "deployment": {
+      "type": "object",
+      "description": "Deployment preferences",
+      "properties": {
+        "mode": {
+          "type": "string",
+          "enum": ["nexus_cloud", "aws", "azure", "gcp", "openstack", "on_prem"],
+          "default": "nexus_cloud"
+        },
+        "tier": {
+          "type": "string",
+          "enum": ["starter", "business", "enterprise", "unlimited"],
+          "default": "business"
+        },
+        "high_availability": {
+          "type": "boolean",
+          "default": true
+        },
+        "auto_scaling": {
+          "type": "boolean",
+          "default": true
+        },
+        "backup_retention_days": {
+          "type": "integer",
+          "minimum": 7,
+          "maximum": 365,
+          "default": 30
+        }
+      }
+    },
+    "contacts": {
+      "type": "object",
+      "description": "Key business contacts",
+      "properties": {
+        "admin_email": {
+          "type": "string",
+          "format": "email"
+        },
+        "admin_phone": {
+          "type": "string"
+        },
+        "billing_email": {
+          "type": "string",
+          "format": "email"
+        },
+        "support_email": {
+          "type": "string",
+          "format": "email"
+        }
+      }
+    },
+    "branding": {
+      "type": "object",
+      "description": "Brand customization (optional)",
+      "properties": {
+        "logo_url": {
+          "type": "string",
+          "format": "uri"
+        },
+        "primary_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "secondary_color": {
+          "type": "string",
+          "pattern": "^#[0-9A-Fa-f]{6}$"
+        },
+        "font_family": {
+          "type": "string",
+          "enum": ["Inter", "Roboto", "Poppins", "Lato", "Montserrat", "Open_Sans"]
+        }
+      }
+    }
+  },
+  "examples": [
+    {
+      "business_name": "Acme Trading Ltd",
+      "preferred_domains": ["acmetrading.ng", "acmetrading.com"],
+      "region": "NG",
+      "currency": "NGN",
+      "industry": "ecommerce",
+      "team_size": 12,
+      "channels": ["web", "whatsapp", "email", "pos"],
+      "products_or_services": [
+        {
+          "name": "Organic Coffee Beans 1kg",
+          "type": "product",
+          "price": 2500,
+          "sku": "COFFEE-ORG-1KG",
+          "category": "Beverages"
+        },
+        {
+          "name": "Premium Tea Collection",
+          "type": "product",
+          "price": 1800,
+          "sku": "TEA-PREM-BOX",
+          "category": "Beverages"
+        }
+      ],
+      "payments": ["Paystack", "Flutterwave"],
+      "messaging": ["Twilio", "WhatsApp"],
+      "email_delivery": ["Postmark"],
+      "kyc_tax": ["TaxJar"],
+      "data_residency": "single_region",
+      "compliance": ["ndpa_ng", "pci_dss"],
+      "ai_prefs": {
+        "model_provider": "hybrid",
+        "retrieval": "vector+docdb",
+        "guardrails": true,
+        "pii_scrubbing": true
+      },
+      "features": {
+        "ecommerce": true,
+        "pos": true,
+        "inventory": true
+      },
+      "deployment": {
+        "mode": "nexus_cloud",
+        "tier": "business",
+        "high_availability": true,
+        "auto_scaling": true
+      },
+      "contacts": {
+        "admin_email": "admin@acmetrading.ng",
+        "billing_email": "billing@acmetrading.ng"
+      },
+      "branding": {
+        "primary_color": "#2563EB",
+        "secondary_color": "#10B981",
+        "font_family": "Inter"
+      }
+    },
+    {
+      "business_name": "HealthCare Plus Clinic",
+      "preferred_domains": ["healthcareplus.ng"],
+      "region": "NG",
+      "currency": "NGN",
+      "industry": "healthcare",
+      "team_size": 35,
+      "channels": ["web", "mobile_app", "whatsapp", "voice"],
+      "products_or_services": [
+        {
+          "name": "General Consultation",
+          "type": "service",
+          "price": 5000,
+          "category": "Medical Services"
+        },
+        {
+          "name": "Laboratory Tests",
+          "type": "service",
+          "price": 8000,
+          "category": "Diagnostics"
+        }
+      ],
+      "payments": ["Paystack", "Flutterwave", "Stripe"],
+      "messaging": ["WhatsApp", "Twilio"],
+      "email_delivery": ["Postmark"],
+      "kyc_tax": ["Sumsub"],
+      "data_residency": "single_region",
+      "compliance": ["hipaa", "ndpa_ng", "gdpr"],
+      "ai_prefs": {
+        "model_provider": "anthropic",
+        "retrieval": "vector+docdb",
+        "guardrails": true,
+        "pii_scrubbing": true
+      },
+      "features": {
+        "patient_mgmt": true,
+        "crm": true,
+        "support": true,
+        "finance": true
+      },
+      "deployment": {
+        "mode": "nexus_cloud",
+        "tier": "enterprise",
+        "high_availability": true,
+        "backup_retention_days": 90
+      },
+      "contacts": {
+        "admin_email": "admin@healthcareplus.ng",
+        "support_email": "support@healthcareplus.ng"
+      }
+    }
+  ]
+}
