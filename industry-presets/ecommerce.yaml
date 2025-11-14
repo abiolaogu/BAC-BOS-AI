@@ -1,0 +1,357 @@
+name: "eCommerce"
+description: "Complete eCommerce platform with storefront, inventory, and order management"
+industry: "ecommerce"
+icon: "🛒"
+
+# Feature toggles
+features:
+  crm: true
+  marketing: true
+  support: true
+  finance: true
+  hr: true
+  projects: false
+  ecommerce: true
+  pos: true
+  inventory: true
+  analytics: true
+  ai_copilots: true
+
+# Microservices to deploy
+services:
+  - name: "storefront"
+    type: "web"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+  - name: "product-catalog"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  - name: "cart"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+  - name: "checkout"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  - name: "order-management"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  - name: "inventory"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+  - name: "payment-gateway"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+  - name: "crm"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "1000m"
+      memory: "1Gi"
+
+  - name: "marketing"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+  - name: "support"
+    type: "api"
+    replicas: 2
+    resources:
+      cpu: "500m"
+      memory: "512Mi"
+
+# Database schemas to create
+databases:
+  - name: "products"
+    type: "yugabyte"
+    tables:
+      - products
+      - categories
+      - variants
+      - pricing
+      - inventory_levels
+
+  - name: "orders"
+    type: "yugabyte"
+    tables:
+      - orders
+      - order_items
+      - shipments
+      - fulfillments
+      - returns
+
+  - name: "customers"
+    type: "yugabyte"
+    tables:
+      - customers
+      - addresses
+      - payment_methods
+      - wishlists
+      - reviews
+
+  - name: "analytics"
+    type: "clickhouse"
+    tables:
+      - page_views
+      - product_views
+      - cart_events
+      - purchase_events
+      - user_sessions
+
+# Default data to seed
+seed_data:
+  product_categories:
+    - "Electronics"
+    - "Clothing"
+    - "Food & Beverages"
+    - "Home & Garden"
+    - "Beauty & Health"
+    - "Sports & Outdoors"
+    - "Books & Media"
+    - "Toys & Games"
+
+  shipping_methods:
+    - name: "Standard Shipping"
+      price: 500
+      delivery_days: "5-7"
+    - name: "Express Shipping"
+      price: 1500
+      delivery_days: "2-3"
+    - name: "Same Day Delivery"
+      price: 3000
+      delivery_days: "0"
+
+  payment_methods:
+    - "Credit Card"
+    - "Debit Card"
+    - "Mobile Money"
+    - "Bank Transfer"
+    - "Cash on Delivery"
+
+  order_statuses:
+    - "pending"
+    - "confirmed"
+    - "processing"
+    - "shipped"
+    - "delivered"
+    - "cancelled"
+    - "refunded"
+
+  email_templates:
+    - name: "Order Confirmation"
+      subject: "Your order #{{order_number}} has been received"
+      type: "transactional"
+
+    - name: "Shipping Notification"
+      subject: "Your order #{{order_number}} has been shipped"
+      type: "transactional"
+
+    - name: "Delivery Confirmation"
+      subject: "Your order #{{order_number}} has been delivered"
+      type: "transactional"
+
+    - name: "Abandoned Cart"
+      subject: "You left items in your cart"
+      type: "marketing"
+
+    - name: "Welcome Email"
+      subject: "Welcome to {{business_name}}"
+      type: "onboarding"
+
+# Automation workflows
+workflows:
+  - name: "Abandoned Cart Recovery"
+    trigger: "cart_abandoned"
+    delay: "1 hour"
+    actions:
+      - type: "send_email"
+        template: "Abandoned Cart"
+      - type: "send_whatsapp"
+        message: "Complete your purchase and get 10% off!"
+
+  - name: "Post-Purchase Follow-up"
+    trigger: "order_delivered"
+    delay: "3 days"
+    actions:
+      - type: "send_email"
+        template: "Request Review"
+      - type: "create_task"
+        assignee: "support_team"
+        task: "Follow up for feedback"
+
+  - name: "Low Stock Alert"
+    trigger: "inventory_low"
+    threshold: 10
+    actions:
+      - type: "send_notification"
+        channel: "slack"
+        message: "Stock low for {{product_name}}"
+      - type: "create_task"
+        assignee: "inventory_manager"
+        task: "Reorder {{product_name}}"
+
+# AI Copilots
+ai_copilots:
+  - name: "Sales Assistant"
+    role: "product_recommendations"
+    model: "gpt-4"
+    triggers:
+      - "customer_browsing"
+      - "cart_update"
+
+  - name: "Support Bot"
+    role: "customer_support"
+    model: "claude"
+    triggers:
+      - "chat_initiated"
+      - "support_ticket_created"
+    capabilities:
+      - "order_status_lookup"
+      - "refund_processing"
+      - "product_information"
+
+  - name: "Inventory Optimizer"
+    role: "inventory_management"
+    model: "gpt-4"
+    triggers:
+      - "daily_schedule"
+    capabilities:
+      - "demand_forecasting"
+      - "reorder_point_calculation"
+      - "supplier_recommendation"
+
+# Integration connectors
+integrations:
+  payment_gateways:
+    - provider: "Paystack"
+      auto_configure: true
+      currencies: ["NGN"]
+
+    - provider: "Flutterwave"
+      auto_configure: true
+      currencies: ["NGN", "USD", "GBP", "EUR"]
+
+    - provider: "Stripe"
+      auto_configure: true
+      currencies: ["USD", "EUR", "GBP"]
+
+  shipping_carriers:
+    - provider: "DHL"
+      auto_configure: false
+
+    - provider: "FedEx"
+      auto_configure: false
+
+    - provider: "Local Courier"
+      auto_configure: true
+
+  messaging:
+    - provider: "WhatsApp Business"
+      auto_configure: true
+      use_cases:
+        - "order_notifications"
+        - "customer_support"
+        - "marketing_campaigns"
+
+    - provider: "Twilio SMS"
+      auto_configure: true
+      use_cases:
+        - "order_notifications"
+        - "otp_verification"
+
+  email:
+    - provider: "Postmark"
+      auto_configure: true
+      use_cases:
+        - "transactional"
+        - "marketing"
+
+# Analytics dashboards
+dashboards:
+  - name: "Sales Overview"
+    widgets:
+      - type: "metric"
+        title: "Total Sales"
+        query: "SUM(order_total)"
+        period: "last_30_days"
+
+      - type: "chart"
+        title: "Sales Trend"
+        chart_type: "line"
+        query: "SELECT date, SUM(order_total) FROM orders GROUP BY date"
+
+      - type: "metric"
+        title: "Average Order Value"
+        query: "AVG(order_total)"
+
+      - type: "table"
+        title: "Top Products"
+        query: "SELECT product_name, COUNT(*) as sales FROM order_items GROUP BY product_name ORDER BY sales DESC LIMIT 10"
+
+  - name: "Customer Insights"
+    widgets:
+      - type: "metric"
+        title: "Total Customers"
+        query: "COUNT(DISTINCT customer_id)"
+
+      - type: "metric"
+        title: "New Customers (30d)"
+        query: "COUNT(*) FROM customers WHERE created_at > NOW() - INTERVAL '30 days'"
+
+      - type: "funnel"
+        title: "Purchase Funnel"
+        stages:
+          - "Product View"
+          - "Add to Cart"
+          - "Checkout Started"
+          - "Order Completed"
+
+# Compliance & Security
+compliance:
+  - "PCI DSS" # Payment card data
+  - "GDPR" # European customers
+  - "NDPA" # Nigeria Data Protection
+
+security:
+  - "ssl_required"
+  - "two_factor_auth"
+  - "fraud_detection"
+  - "rate_limiting"
+
+# Estimated costs (monthly, USD)
+estimated_costs:
+  infrastructure: 150
+  bandwidth: 50
+  storage: 30
+  ai_api_calls: 100
+  payment_processing: "2.9% + $0.30 per transaction"
+  total_fixed: 330

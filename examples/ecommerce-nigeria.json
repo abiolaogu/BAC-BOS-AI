@@ -1,0 +1,95 @@
+{
+  "business_name": "Afro Marketplace",
+  "preferred_domains": ["afromarketplace.ng", "afromarketplace.com"],
+  "region": "NG",
+  "currency": "NGN",
+  "industry": "ecommerce",
+  "team_size": 8,
+  "channels": [
+    "web",
+    "mobile_app",
+    "whatsapp",
+    "pos"
+  ],
+  "products_or_services": [
+    {
+      "name": "African Print Dress",
+      "type": "product",
+      "price": 12500,
+      "sku": "DRESS-AFP-001",
+      "category": "Fashion"
+    },
+    {
+      "name": "Handwoven Basket",
+      "type": "product",
+      "price": 3500,
+      "sku": "HOME-BASKET-001",
+      "category": "Home & Decor"
+    },
+    {
+      "name": "Organic Shea Butter",
+      "type": "product",
+      "price": 2000,
+      "sku": "BEAUTY-SHEA-250G",
+      "category": "Beauty"
+    },
+    {
+      "name": "Nigerian Coffee Beans 1kg",
+      "type": "product",
+      "price": 4500,
+      "sku": "FOOD-COFFEE-1KG",
+      "category": "Food & Beverage"
+    }
+  ],
+  "payments": [
+    "Paystack",
+    "Flutterwave"
+  ],
+  "messaging": [
+    "WhatsApp",
+    "Twilio"
+  ],
+  "email_delivery": [
+    "Postmark"
+  ],
+  "kyc_tax": [
+    "TaxJar"
+  ],
+  "data_residency": "single_region",
+  "compliance": [
+    "ndpa_ng",
+    "pci_dss"
+  ],
+  "ai_prefs": {
+    "model_provider": "hybrid",
+    "retrieval": "vector+docdb",
+    "guardrails": true,
+    "pii_scrubbing": true
+  },
+  "features": {
+    "crm": true,
+    "marketing": true,
+    "support": true,
+    "finance": true,
+    "ecommerce": true,
+    "pos": true,
+    "inventory": true
+  },
+  "deployment": {
+    "mode": "nexus_cloud",
+    "tier": "business",
+    "high_availability": true,
+    "auto_scaling": true,
+    "backup_retention_days": 30
+  },
+  "contacts": {
+    "admin_email": "admin@afromarketplace.ng",
+    "billing_email": "billing@afromarketplace.ng",
+    "support_email": "support@afromarketplace.ng"
+  },
+  "branding": {
+    "primary_color": "#16A34A",
+    "secondary_color": "#DC2626",
+    "font_family": "Inter"
+  }
+}
