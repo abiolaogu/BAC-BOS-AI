@@ -1,0 +1,125 @@
+syntax = "proto3";
+
+package bac.project;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/project";
+
+message Project {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string status = 5; // planned, active, on_hold, completed, cancelled
+  bac.common.Timestamp start_date = 6;
+  bac.common.Timestamp end_date = 7;
+  bac.common.Money budget = 8;
+  bac.common.Money actual_cost = 9;
+  string owner_id = 10;
+  repeated string team_member_ids = 11;
+  string priority = 12; // low, medium, high, critical
+  int32 progress = 13; // 0-100
+  repeated string tags = 14;
+  map<string, string> custom_fields = 15;
+  bac.common.AuditInfo audit = 16;
+}
+
+message Task {
+  string id = 1;
+  string tenant_id = 2;
+  string project_id = 3;
+  string parent_task_id = 4;
+  string name = 5;
+  string description = 6;
+  string status = 7; // todo, in_progress, review, done, blocked
+  string priority = 8;
+  bac.common.Timestamp start_date = 9;
+  bac.common.Timestamp due_date = 10;
+  bac.common.Timestamp completed_date = 11;
+  string assigned_to = 12;
+  double estimated_hours = 13;
+  double actual_hours = 14;
+  int32 progress = 15;
+  repeated string dependencies = 16;
+  repeated string attachments = 17;
+  repeated string tags = 18;
+  bac.common.AuditInfo audit = 19;
+}
+
+message TimeTracking {
+  string id = 1;
+  string tenant_id = 2;
+  string project_id = 3;
+  string task_id = 4;
+  string user_id = 5;
+  bac.common.Timestamp start_time = 6;
+  bac.common.Timestamp end_time = 7;
+  double hours = 8;
+  string description = 9;
+  bool is_billable = 10;
+  bac.common.Money hourly_rate = 11;
+  bac.common.Money amount = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message Milestone {
+  string id = 1;
+  string project_id = 2;
+  string name = 3;
+  string description = 4;
+  bac.common.Timestamp due_date = 5;
+  bool is_completed = 6;
+  bac.common.Timestamp completed_date = 7;
+  int32 completion_percentage = 8;
+  bac.common.AuditInfo audit = 9;
+}
+
+service ProjectManagementService {
+  rpc CreateProject(Project) returns (Project);
+  rpc GetProject(GetProjectRequest) returns (Project);
+  rpc UpdateProject(Project) returns (Project);
+  rpc ListProjects(bac.common.QueryRequest) returns (ListProjectsResponse);
+
+  rpc CreateTask(Task) returns (Task);
+  rpc GetTask(GetTaskRequest) returns (Task);
+  rpc UpdateTask(Task) returns (Task);
+  rpc ListTasks(bac.common.QueryRequest) returns (ListTasksResponse);
+
+  rpc CreateTimeTracking(TimeTracking) returns (TimeTracking);
+  rpc ListTimeTracking(bac.common.QueryRequest) returns (ListTimeTrackingResponse);
+
+  rpc CreateMilestone(Milestone) returns (Milestone);
+  rpc ListMilestones(ListMilestonesRequest) returns (ListMilestonesResponse);
+}
+
+message GetProjectRequest {
+  string id = 1;
+}
+
+message ListProjectsResponse {
+  repeated Project projects = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetTaskRequest {
+  string id = 1;
+}
+
+message ListTasksResponse {
+  repeated Task tasks = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ListTimeTrackingResponse {
+  repeated TimeTracking entries = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ListMilestonesRequest {
+  string project_id = 1;
+}
+
+message ListMilestonesResponse {
+  repeated Milestone milestones = 1;
+}

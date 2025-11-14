@@ -1,0 +1,122 @@
+syntax = "proto3";
+
+package bac.common;
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/common";
+
+// Common timestamp message
+message Timestamp {
+  int64 seconds = 1;
+  int32 nanos = 2;
+}
+
+// Common pagination request
+message PaginationRequest {
+  int32 page = 1;
+  int32 page_size = 2;
+  string sort_by = 3;
+  string sort_order = 4; // asc or desc
+}
+
+// Common pagination response
+message PaginationResponse {
+  int32 page = 1;
+  int32 page_size = 2;
+  int64 total_count = 3;
+  int32 total_pages = 4;
+}
+
+// Common address
+message Address {
+  string street1 = 1;
+  string street2 = 2;
+  string city = 3;
+  string state = 4;
+  string postal_code = 5;
+  string country = 6;
+}
+
+// Common money/currency
+message Money {
+  string amount = 1; // Decimal as string to avoid precision loss
+  string currency = 2; // ISO 4217 currency code
+}
+
+// Common metadata
+message Metadata {
+  map<string, string> fields = 1;
+}
+
+// Common audit fields
+message AuditInfo {
+  string created_by = 1;
+  Timestamp created_at = 2;
+  string updated_by = 3;
+  Timestamp updated_at = 4;
+  string deleted_by = 5;
+  Timestamp deleted_at = 6;
+  bool is_deleted = 7;
+}
+
+// Common error response
+message Error {
+  string code = 1;
+  string message = 2;
+  map<string, string> details = 3;
+}
+
+// Common response wrapper
+message Response {
+  bool success = 1;
+  Error error = 2;
+  bytes data = 3; // Any encoded as bytes
+}
+
+// Tenant information
+message TenantInfo {
+  string tenant_id = 1;
+  string tenant_name = 2;
+  string plan = 3; // starter, professional, enterprise
+  bool is_active = 4;
+}
+
+// User information
+message UserInfo {
+  string user_id = 1;
+  string email = 2;
+  string first_name = 3;
+  string last_name = 4;
+  repeated string roles = 5;
+  repeated string permissions = 6;
+}
+
+// Filter operators
+enum FilterOperator {
+  FILTER_OPERATOR_UNSPECIFIED = 0;
+  FILTER_OPERATOR_EQUALS = 1;
+  FILTER_OPERATOR_NOT_EQUALS = 2;
+  FILTER_OPERATOR_GREATER_THAN = 3;
+  FILTER_OPERATOR_GREATER_THAN_OR_EQUAL = 4;
+  FILTER_OPERATOR_LESS_THAN = 5;
+  FILTER_OPERATOR_LESS_THAN_OR_EQUAL = 6;
+  FILTER_OPERATOR_IN = 7;
+  FILTER_OPERATOR_NOT_IN = 8;
+  FILTER_OPERATOR_CONTAINS = 9;
+  FILTER_OPERATOR_STARTS_WITH = 10;
+  FILTER_OPERATOR_ENDS_WITH = 11;
+}
+
+// Filter criteria
+message FilterCriteria {
+  string field = 1;
+  FilterOperator operator = 2;
+  repeated string values = 3;
+}
+
+// Common search/query request
+message QueryRequest {
+  repeated FilterCriteria filters = 1;
+  PaginationRequest pagination = 2;
+  repeated string include_fields = 3;
+  repeated string exclude_fields = 4;
+}

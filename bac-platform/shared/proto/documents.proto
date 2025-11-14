@@ -1,0 +1,142 @@
+syntax = "proto3";
+
+package bac.documents;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/documents";
+
+message Document {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string file_type = 5; // pdf, docx, xlsx, txt, image, etc.
+  int64 file_size = 6;
+  string storage_path = 7;
+  string url = 8;
+  string folder_id = 9;
+  repeated string tags = 10;
+  string uploaded_by = 11;
+  bac.common.Timestamp uploaded_at = 12;
+  string version = 13;
+  repeated DocumentVersion versions = 14;
+  repeated DocumentShare shares = 15;
+  map<string, string> metadata = 16;
+  bool is_encrypted = 17;
+  string checksum = 18;
+  bac.common.AuditInfo audit = 19;
+}
+
+message DocumentVersion {
+  string version_number = 1;
+  string file_path = 2;
+  int64 file_size = 3;
+  string uploaded_by = 4;
+  bac.common.Timestamp uploaded_at = 5;
+  string change_notes = 6;
+}
+
+message DocumentShare {
+  string shared_with_id = 1;
+  string permission = 2; // view, edit, admin
+  bac.common.Timestamp shared_at = 3;
+  bac.common.Timestamp expires_at = 4;
+}
+
+message Folder {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string parent_folder_id = 4;
+  string path = 5;
+  int32 document_count = 6;
+  repeated string tags = 7;
+  bac.common.AuditInfo audit = 8;
+}
+
+message DocumentTemplate {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5; // contract, invoice, report, letter
+  string template_path = 6;
+  repeated TemplateField fields = 7;
+  bac.common.AuditInfo audit = 8;
+}
+
+message TemplateField {
+  string name = 1;
+  string type = 2; // text, number, date, image
+  string default_value = 3;
+  bool is_required = 4;
+}
+
+service DocumentService {
+  rpc UploadDocument(UploadDocumentRequest) returns (Document);
+  rpc GetDocument(GetDocumentRequest) returns (Document);
+  rpc UpdateDocument(Document) returns (Document);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (bac.common.Response);
+  rpc ListDocuments(bac.common.QueryRequest) returns (ListDocumentsResponse);
+  rpc DownloadDocument(DownloadDocumentRequest) returns (DownloadDocumentResponse);
+  rpc ShareDocument(ShareDocumentRequest) returns (Document);
+
+  rpc CreateFolder(Folder) returns (Folder);
+  rpc ListFolders(ListFoldersRequest) returns (ListFoldersResponse);
+
+  rpc CreateTemplate(DocumentTemplate) returns (DocumentTemplate);
+  rpc GenerateFromTemplate(GenerateFromTemplateRequest) returns (Document);
+}
+
+message UploadDocumentRequest {
+  string name = 1;
+  string folder_id = 2;
+  bytes content = 3;
+  string content_type = 4;
+  repeated string tags = 5;
+}
+
+message GetDocumentRequest {
+  string id = 1;
+}
+
+message DeleteDocumentRequest {
+  string id = 1;
+}
+
+message ListDocumentsResponse {
+  repeated Document documents = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message DownloadDocumentRequest {
+  string id = 1;
+  string version = 2;
+}
+
+message DownloadDocumentResponse {
+  string download_url = 1;
+  bac.common.Timestamp expires_at = 2;
+}
+
+message ShareDocumentRequest {
+  string document_id = 1;
+  string share_with_id = 2;
+  string permission = 3;
+  bac.common.Timestamp expires_at = 4;
+}
+
+message ListFoldersRequest {
+  string parent_folder_id = 1;
+}
+
+message ListFoldersResponse {
+  repeated Folder folders = 1;
+}
+
+message GenerateFromTemplateRequest {
+  string template_id = 1;
+  map<string, string> field_values = 2;
+  string output_format = 3;
+}
