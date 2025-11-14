@@ -1,0 +1,369 @@
+syntax = "proto3";
+
+package bac.controlplane;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/controlplane";
+
+// Tenant Management
+message Tenant {
+  string id = 1;
+  string name = 2;
+  string slug = 3;
+  string plan = 4; // starter, professional, enterprise, custom
+  string status = 5; // active, suspended, cancelled
+  bac.common.Timestamp created_at = 6;
+  bac.common.Timestamp trial_ends_at = 7;
+  TenantSettings settings = 8;
+  TenantLimits limits = 9;
+  TenantUsage usage = 10;
+  repeated string enabled_modules = 11;
+  map<string, string> metadata = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message TenantSettings {
+  string timezone = 1;
+  string currency = 2;
+  string date_format = 3;
+  string language = 4;
+  string logo_url = 5;
+  string primary_color = 6;
+  map<string, string> custom_settings = 7;
+}
+
+message TenantLimits {
+  int32 max_users = 1;
+  int32 max_storage_gb = 2;
+  int32 max_api_calls_per_month = 3;
+  int32 max_database_size_gb = 4;
+  int32 max_records_per_module = 5;
+}
+
+message TenantUsage {
+  int32 user_count = 1;
+  int64 storage_used_bytes = 2;
+  int32 api_calls_this_month = 3;
+  int64 database_size_bytes = 4;
+  bac.common.Timestamp last_updated = 5;
+}
+
+// User Management
+message User {
+  string id = 1;
+  string tenant_id = 2;
+  string email = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string phone = 6;
+  string avatar_url = 7;
+  string status = 8; // active, inactive, suspended
+  repeated string roles = 9;
+  repeated string permissions = 10;
+  UserPreferences preferences = 11;
+  bac.common.Timestamp last_login = 12;
+  bac.common.Timestamp password_changed_at = 13;
+  bool mfa_enabled = 14;
+  bac.common.AuditInfo audit = 15;
+}
+
+message UserPreferences {
+  string timezone = 1;
+  string language = 2;
+  string theme = 3; // light, dark
+  bool email_notifications = 4;
+  bool push_notifications = 5;
+  map<string, string> custom_preferences = 6;
+}
+
+message Role {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated string permissions = 5;
+  bool is_system_role = 6;
+  bac.common.AuditInfo audit = 7;
+}
+
+message Permission {
+  string id = 1;
+  string resource = 2; // crm, erp, ecommerce, etc.
+  string action = 3; // create, read, update, delete
+  string scope = 4; // own, team, all
+}
+
+// Database Provisioning
+message DatabaseInstance {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string engine = 4; // yugabyte, vitess, scylladb, mongodb
+  string version = 5;
+  string region = 6;
+  string instance_type = 7; // shared, dedicated
+  DatabaseConfig config = 8;
+  string status = 9; // provisioning, active, maintenance, failed
+  string connection_string = 10;
+  DatabaseMetrics metrics = 11;
+  bac.common.Timestamp created_at = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message DatabaseConfig {
+  int32 cpu_cores = 1;
+  int32 memory_gb = 2;
+  int32 storage_gb = 3;
+  int32 iops = 4;
+  bool auto_scaling = 5;
+  bool high_availability = 6;
+  int32 replica_count = 7;
+  string backup_schedule = 8; // cron expression
+  int32 backup_retention_days = 9;
+}
+
+message DatabaseMetrics {
+  double cpu_usage_percent = 1;
+  double memory_usage_percent = 2;
+  double storage_usage_percent = 3;
+  int64 connections = 4;
+  double queries_per_second = 5;
+  double average_latency_ms = 6;
+  bac.common.Timestamp collected_at = 7;
+}
+
+// API Gateway
+message APIKey {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string key = 4;
+  string type = 5; // public, private, restricted
+  repeated string scopes = 6;
+  bac.common.Timestamp expires_at = 7;
+  bool is_active = 8;
+  int32 rate_limit = 9; // requests per minute
+  APIKeyUsage usage = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message APIKeyUsage {
+  int32 requests_today = 1;
+  int32 requests_this_month = 2;
+  bac.common.Timestamp last_used_at = 3;
+}
+
+// Billing & Subscription
+message Subscription {
+  string id = 1;
+  string tenant_id = 2;
+  string plan_id = 3;
+  string status = 4; // active, past_due, cancelled, trial
+  bac.common.Timestamp current_period_start = 5;
+  bac.common.Timestamp current_period_end = 6;
+  bac.common.Timestamp trial_end = 7;
+  bac.common.Money amount = 8;
+  string billing_interval = 9; // monthly, annually
+  repeated SubscriptionItem items = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message SubscriptionItem {
+  string id = 1;
+  string product_id = 2;
+  string product_name = 3;
+  int32 quantity = 4;
+  bac.common.Money unit_price = 5;
+  bac.common.Money total = 6;
+}
+
+message Invoice {
+  string id = 1;
+  string tenant_id = 2;
+  string invoice_number = 3;
+  bac.common.Timestamp invoice_date = 4;
+  bac.common.Timestamp due_date = 5;
+  bac.common.Money subtotal = 6;
+  bac.common.Money tax = 7;
+  bac.common.Money total = 8;
+  string status = 9; // draft, open, paid, void
+  repeated InvoiceLine lines = 10;
+  string payment_method = 11;
+  bac.common.Timestamp paid_at = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message InvoiceLine {
+  string description = 1;
+  int32 quantity = 2;
+  bac.common.Money unit_price = 3;
+  bac.common.Money amount = 4;
+}
+
+// Audit Log
+message AuditLog {
+  string id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+  string action = 4; // create, read, update, delete
+  string resource_type = 5; // tenant, user, crm_contact, etc.
+  string resource_id = 6;
+  string ip_address = 7;
+  string user_agent = 8;
+  map<string, string> changes = 9;
+  bac.common.Timestamp timestamp = 10;
+}
+
+// Control Plane Service
+service ControlPlaneService {
+  // Tenant Management
+  rpc CreateTenant(Tenant) returns (Tenant);
+  rpc GetTenant(GetTenantRequest) returns (Tenant);
+  rpc UpdateTenant(Tenant) returns (Tenant);
+  rpc SuspendTenant(SuspendTenantRequest) returns (Tenant);
+  rpc ListTenants(bac.common.QueryRequest) returns (ListTenantsResponse);
+
+  // User Management
+  rpc CreateUser(User) returns (User);
+  rpc GetUser(GetUserRequest) returns (User);
+  rpc UpdateUser(User) returns (User);
+  rpc DeleteUser(DeleteUserRequest) returns (bac.common.Response);
+  rpc ListUsers(bac.common.QueryRequest) returns (ListUsersResponse);
+
+  // Role & Permission Management
+  rpc CreateRole(Role) returns (Role);
+  rpc GetRole(GetRoleRequest) returns (Role);
+  rpc UpdateRole(Role) returns (Role);
+  rpc ListRoles(bac.common.QueryRequest) returns (ListRolesResponse);
+  rpc ListPermissions(ListPermissionsRequest) returns (ListPermissionsResponse);
+
+  // Database Provisioning
+  rpc ProvisionDatabase(ProvisionDatabaseRequest) returns (DatabaseInstance);
+  rpc GetDatabaseInstance(GetDatabaseInstanceRequest) returns (DatabaseInstance);
+  rpc ScaleDatabase(ScaleDatabaseRequest) returns (DatabaseInstance);
+  rpc ListDatabases(bac.common.QueryRequest) returns (ListDatabasesResponse);
+
+  // API Key Management
+  rpc CreateAPIKey(APIKey) returns (APIKey);
+  rpc GetAPIKey(GetAPIKeyRequest) returns (APIKey);
+  rpc RevokeAPIKey(RevokeAPIKeyRequest) returns (bac.common.Response);
+  rpc ListAPIKeys(bac.common.QueryRequest) returns (ListAPIKeysResponse);
+
+  // Billing & Subscription
+  rpc CreateSubscription(Subscription) returns (Subscription);
+  rpc GetSubscription(GetSubscriptionRequest) returns (Subscription);
+  rpc UpdateSubscription(Subscription) returns (Subscription);
+  rpc CancelSubscription(CancelSubscriptionRequest) returns (Subscription);
+  rpc ListInvoices(bac.common.QueryRequest) returns (ListInvoicesResponse);
+
+  // Audit Logs
+  rpc GetAuditLogs(GetAuditLogsRequest) returns (GetAuditLogsResponse);
+}
+
+// Request/Response messages
+message GetTenantRequest {
+  string id = 1;
+}
+
+message SuspendTenantRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message ListTenantsResponse {
+  repeated Tenant tenants = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetUserRequest {
+  string id = 1;
+}
+
+message DeleteUserRequest {
+  string id = 1;
+}
+
+message ListUsersResponse {
+  repeated User users = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetRoleRequest {
+  string id = 1;
+}
+
+message ListRolesResponse {
+  repeated Role roles = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ListPermissionsRequest {
+  string resource = 1;
+}
+
+message ListPermissionsResponse {
+  repeated Permission permissions = 1;
+}
+
+message ProvisionDatabaseRequest {
+  string tenant_id = 1;
+  string name = 2;
+  string engine = 3;
+  string region = 4;
+  DatabaseConfig config = 5;
+}
+
+message GetDatabaseInstanceRequest {
+  string id = 1;
+}
+
+message ScaleDatabaseRequest {
+  string id = 1;
+  DatabaseConfig new_config = 2;
+}
+
+message ListDatabasesResponse {
+  repeated DatabaseInstance instances = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetAPIKeyRequest {
+  string id = 1;
+}
+
+message RevokeAPIKeyRequest {
+  string id = 1;
+}
+
+message ListAPIKeysResponse {
+  repeated APIKey keys = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetSubscriptionRequest {
+  string tenant_id = 1;
+}
+
+message CancelSubscriptionRequest {
+  string id = 1;
+  bool immediate = 2;
+}
+
+message ListInvoicesResponse {
+  repeated Invoice invoices = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetAuditLogsRequest {
+  string tenant_id = 1;
+  bac.common.Timestamp start_date = 2;
+  bac.common.Timestamp end_date = 3;
+  string user_id = 4;
+  string resource_type = 5;
+}
+
+message GetAuditLogsResponse {
+  repeated AuditLog logs = 1;
+  bac.common.PaginationResponse pagination = 2;
+}

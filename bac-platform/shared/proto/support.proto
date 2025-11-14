@@ -1,0 +1,155 @@
+syntax = "proto3";
+
+package bac.support;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/support";
+
+message Ticket {
+  string id = 1;
+  string tenant_id = 2;
+  string ticket_number = 3;
+  string subject = 4;
+  string description = 5;
+  string status = 6; // open, pending, resolved, closed
+  string priority = 7; // low, medium, high, urgent
+  string category = 8;
+  string customer_id = 9;
+  string assigned_to = 10;
+  bac.common.Timestamp created_at = 11;
+  bac.common.Timestamp updated_at = 12;
+  bac.common.Timestamp resolved_at = 13;
+  bac.common.Timestamp closed_at = 14;
+  repeated TicketComment comments = 15;
+  repeated string attachments = 16;
+  repeated string tags = 17;
+  map<string, string> custom_fields = 18;
+  bac.common.AuditInfo audit = 19;
+}
+
+message TicketComment {
+  string id = 1;
+  string ticket_id = 2;
+  string author_id = 3;
+  string author_type = 4; // agent, customer, system
+  string content = 5;
+  bool is_internal = 6;
+  repeated string attachments = 7;
+  bac.common.Timestamp created_at = 8;
+}
+
+message KnowledgeBase {
+  string id = 1;
+  string tenant_id = 2;
+  string title = 3;
+  string content = 4;
+  string category_id = 5;
+  repeated string tags = 6;
+  string status = 7; // draft, published, archived
+  int32 view_count = 8;
+  int32 helpful_count = 9;
+  int32 not_helpful_count = 10;
+  bac.common.Timestamp published_at = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message SupportCategory {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string parent_id = 5;
+  int32 sort_order = 6;
+  bool is_active = 7;
+  bac.common.AuditInfo audit = 8;
+}
+
+message LiveChat {
+  string id = 1;
+  string tenant_id = 2;
+  string customer_id = 3;
+  string agent_id = 4;
+  string status = 5; // waiting, active, resolved, closed
+  bac.common.Timestamp started_at = 6;
+  bac.common.Timestamp ended_at = 7;
+  repeated ChatMessage messages = 8;
+  string rating = 9; // 1-5
+  string feedback = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message ChatMessage {
+  string id = 1;
+  string sender_id = 2;
+  string sender_type = 3; // agent, customer, bot
+  string content = 4;
+  bac.common.Timestamp timestamp = 5;
+  bool is_read = 6;
+}
+
+service SupportService {
+  rpc CreateTicket(Ticket) returns (Ticket);
+  rpc GetTicket(GetTicketRequest) returns (Ticket);
+  rpc UpdateTicket(Ticket) returns (Ticket);
+  rpc ListTickets(bac.common.QueryRequest) returns (ListTicketsResponse);
+  rpc AddComment(AddCommentRequest) returns (TicketComment);
+  rpc ResolveTicket(ResolveTicketRequest) returns (Ticket);
+
+  rpc CreateKnowledgeBase(KnowledgeBase) returns (KnowledgeBase);
+  rpc GetKnowledgeBase(GetKnowledgeBaseRequest) returns (KnowledgeBase);
+  rpc SearchKnowledgeBase(SearchKnowledgeBaseRequest) returns (SearchKnowledgeBaseResponse);
+
+  rpc StartLiveChat(StartLiveChatRequest) returns (LiveChat);
+  rpc SendChatMessage(SendChatMessageRequest) returns (ChatMessage);
+  rpc EndLiveChat(EndLiveChatRequest) returns (LiveChat);
+}
+
+message GetTicketRequest {
+  string id = 1;
+}
+
+message ListTicketsResponse {
+  repeated Ticket tickets = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message AddCommentRequest {
+  string ticket_id = 1;
+  string content = 2;
+  bool is_internal = 3;
+}
+
+message ResolveTicketRequest {
+  string id = 1;
+  string resolution = 2;
+}
+
+message GetKnowledgeBaseRequest {
+  string id = 1;
+}
+
+message SearchKnowledgeBaseRequest {
+  string query = 1;
+  string category_id = 2;
+}
+
+message SearchKnowledgeBaseResponse {
+  repeated KnowledgeBase articles = 1;
+}
+
+message StartLiveChatRequest {
+  string customer_id = 1;
+  string initial_message = 2;
+}
+
+message SendChatMessageRequest {
+  string chat_id = 1;
+  string content = 2;
+}
+
+message EndLiveChatRequest {
+  string chat_id = 1;
+  int32 rating = 2;
+  string feedback = 3;
+}

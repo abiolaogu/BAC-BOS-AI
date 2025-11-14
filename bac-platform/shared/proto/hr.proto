@@ -1,0 +1,482 @@
+syntax = "proto3";
+
+package bac.hr;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/hr";
+
+// Employee Management
+message Employee {
+  string id = 1;
+  string tenant_id = 2;
+  string employee_number = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string email = 6;
+  string phone = 7;
+  bac.common.Timestamp date_of_birth = 8;
+  string gender = 9;
+  bac.common.Address address = 10;
+  string department_id = 11;
+  string job_title = 12;
+  string manager_id = 13;
+  bac.common.Timestamp hire_date = 14;
+  bac.common.Timestamp termination_date = 15;
+  string employment_type = 16; // full_time, part_time, contract, intern
+  string employment_status = 17; // active, on_leave, terminated
+  bac.common.Money salary = 18;
+  string pay_frequency = 19; // hourly, weekly, biweekly, monthly, annually
+  string tax_id = 20;
+  EmergencyContact emergency_contact = 21;
+  repeated string skills = 22;
+  repeated string certifications = 23;
+  map<string, string> custom_fields = 24;
+  bac.common.AuditInfo audit = 25;
+}
+
+message EmergencyContact {
+  string name = 1;
+  string relationship = 2;
+  string phone = 3;
+  string email = 4;
+}
+
+message Department {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string code = 4;
+  string description = 5;
+  string manager_id = 6;
+  string parent_department_id = 7;
+  int32 employee_count = 8;
+  bac.common.AuditInfo audit = 9;
+}
+
+// Payroll
+message PayrollRun {
+  string id = 1;
+  string tenant_id = 2;
+  string run_number = 3;
+  bac.common.Timestamp pay_period_start = 4;
+  bac.common.Timestamp pay_period_end = 5;
+  bac.common.Timestamp pay_date = 6;
+  string status = 7; // draft, processing, completed, paid
+  repeated Paycheck paychecks = 8;
+  bac.common.Money total_gross_pay = 9;
+  bac.common.Money total_deductions = 10;
+  bac.common.Money total_net_pay = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message Paycheck {
+  string id = 1;
+  string employee_id = 2;
+  string payroll_run_id = 3;
+  bac.common.Money regular_hours = 4;
+  bac.common.Money overtime_hours = 5;
+  bac.common.Money regular_pay = 6;
+  bac.common.Money overtime_pay = 7;
+  bac.common.Money bonus = 8;
+  bac.common.Money commission = 9;
+  bac.common.Money gross_pay = 10;
+  repeated Deduction deductions = 11;
+  bac.common.Money total_deductions = 12;
+  bac.common.Money net_pay = 13;
+  bac.common.Money employer_taxes = 14;
+  string status = 15; // pending, paid, cancelled
+  bac.common.AuditInfo audit = 16;
+}
+
+message Deduction {
+  string type = 1; // tax, insurance, retirement, garnishment
+  string name = 2;
+  bac.common.Money amount = 3;
+  bool is_pre_tax = 4;
+}
+
+// Time Tracking
+message TimeEntry {
+  string id = 1;
+  string tenant_id = 2;
+  string employee_id = 3;
+  bac.common.Timestamp clock_in = 4;
+  bac.common.Timestamp clock_out = 5;
+  double hours = 6;
+  string type = 7; // regular, overtime, double_time
+  string project_id = 8;
+  string task_id = 9;
+  string notes = 10;
+  string status = 11; // pending, approved, rejected
+  string approved_by = 12;
+  bac.common.Timestamp approved_at = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+message TimeOffRequest {
+  string id = 1;
+  string tenant_id = 2;
+  string employee_id = 3;
+  string type = 4; // vacation, sick, personal, unpaid
+  bac.common.Timestamp start_date = 5;
+  bac.common.Timestamp end_date = 6;
+  double days = 7;
+  string reason = 8;
+  string status = 9; // pending, approved, rejected, cancelled
+  string reviewed_by = 10;
+  bac.common.Timestamp reviewed_at = 11;
+  string review_notes = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message TimeOffBalance {
+  string employee_id = 1;
+  string type = 2; // vacation, sick, personal
+  double accrued = 3;
+  double used = 4;
+  double balance = 5;
+  int32 year = 6;
+}
+
+// Performance Management
+message PerformanceReview {
+  string id = 1;
+  string tenant_id = 2;
+  string employee_id = 3;
+  string reviewer_id = 4;
+  bac.common.Timestamp review_date = 5;
+  string review_period = 6; // Q1 2024, 2024, etc.
+  int32 overall_rating = 7; // 1-5
+  repeated ReviewSection sections = 8;
+  string strengths = 9;
+  string areas_for_improvement = 10;
+  string goals = 11;
+  string employee_comments = 12;
+  string status = 13; // draft, submitted, completed
+  bac.common.AuditInfo audit = 14;
+}
+
+message ReviewSection {
+  string name = 1; // Communication, Teamwork, Technical Skills
+  int32 rating = 2; // 1-5
+  string comments = 3;
+  double weight = 4; // percentage of overall score
+}
+
+message Goal {
+  string id = 1;
+  string tenant_id = 2;
+  string employee_id = 3;
+  string title = 4;
+  string description = 5;
+  string category = 6; // professional, personal, company
+  bac.common.Timestamp start_date = 7;
+  bac.common.Timestamp target_date = 8;
+  int32 progress = 9; // 0-100
+  string status = 10; // active, completed, cancelled, on_hold
+  repeated Milestone milestones = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message Milestone {
+  string title = 1;
+  bac.common.Timestamp due_date = 2;
+  bool is_completed = 3;
+  bac.common.Timestamp completed_at = 4;
+}
+
+// Recruitment
+message JobPosting {
+  string id = 1;
+  string tenant_id = 2;
+  string title = 3;
+  string description = 4;
+  string department_id = 5;
+  string location = 6;
+  string employment_type = 7; // full_time, part_time, contract
+  bac.common.Money salary_min = 8;
+  bac.common.Money salary_max = 9;
+  repeated string required_skills = 10;
+  repeated string preferred_skills = 11;
+  string experience_level = 12; // entry, mid, senior, executive
+  bac.common.Timestamp posting_date = 13;
+  bac.common.Timestamp closing_date = 14;
+  string status = 15; // draft, open, closed, filled
+  int32 application_count = 16;
+  bac.common.AuditInfo audit = 17;
+}
+
+message Candidate {
+  string id = 1;
+  string tenant_id = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string email = 5;
+  string phone = 6;
+  string resume_url = 7;
+  string cover_letter = 8;
+  string linkedin_url = 9;
+  repeated string skills = 10;
+  string current_company = 11;
+  string current_title = 12;
+  bac.common.Money desired_salary = 13;
+  string source = 14; // website, referral, linkedin, indeed
+  bac.common.AuditInfo audit = 15;
+}
+
+message Application {
+  string id = 1;
+  string tenant_id = 2;
+  string job_posting_id = 3;
+  string candidate_id = 4;
+  bac.common.Timestamp applied_date = 5;
+  string status = 6; // applied, screening, interview, offer, hired, rejected
+  string stage = 7; // phone_screen, technical, onsite, final
+  repeated Interview interviews = 8;
+  int32 rating = 9; // 1-5
+  string notes = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message Interview {
+  string id = 1;
+  bac.common.Timestamp scheduled_at = 2;
+  string interviewer_id = 3;
+  string type = 4; // phone, video, onsite
+  string status = 5; // scheduled, completed, cancelled
+  int32 rating = 6; // 1-5
+  string feedback = 7;
+  bac.common.Timestamp completed_at = 8;
+}
+
+// Benefits
+message Benefit {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string type = 4; // health, dental, vision, retirement, life_insurance
+  string description = 5;
+  string provider = 6;
+  bac.common.Money employee_cost = 7;
+  bac.common.Money employer_cost = 8;
+  bool is_active = 9;
+  bac.common.AuditInfo audit = 10;
+}
+
+message EmployeeBenefit {
+  string id = 1;
+  string employee_id = 2;
+  string benefit_id = 3;
+  bac.common.Timestamp enrollment_date = 4;
+  bac.common.Timestamp effective_date = 5;
+  bac.common.Timestamp termination_date = 6;
+  string status = 7; // active, pending, terminated
+  repeated string dependents = 8;
+  bac.common.Money employee_contribution = 9;
+  bac.common.AuditInfo audit = 10;
+}
+
+// HR Service
+service HRService {
+  // Employees
+  rpc CreateEmployee(Employee) returns (Employee);
+  rpc GetEmployee(GetEmployeeRequest) returns (Employee);
+  rpc UpdateEmployee(Employee) returns (Employee);
+  rpc TerminateEmployee(TerminateEmployeeRequest) returns (Employee);
+  rpc ListEmployees(bac.common.QueryRequest) returns (ListEmployeesResponse);
+
+  // Departments
+  rpc CreateDepartment(Department) returns (Department);
+  rpc GetDepartment(GetDepartmentRequest) returns (Department);
+  rpc UpdateDepartment(Department) returns (Department);
+  rpc ListDepartments(bac.common.QueryRequest) returns (ListDepartmentsResponse);
+
+  // Payroll
+  rpc CreatePayrollRun(PayrollRun) returns (PayrollRun);
+  rpc GetPayrollRun(GetPayrollRunRequest) returns (PayrollRun);
+  rpc ProcessPayroll(ProcessPayrollRequest) returns (PayrollRun);
+  rpc ListPayrollRuns(bac.common.QueryRequest) returns (ListPayrollRunsResponse);
+  rpc GetPaycheck(GetPaycheckRequest) returns (Paycheck);
+
+  // Time Tracking
+  rpc ClockIn(ClockInRequest) returns (TimeEntry);
+  rpc ClockOut(ClockOutRequest) returns (TimeEntry);
+  rpc CreateTimeEntry(TimeEntry) returns (TimeEntry);
+  rpc UpdateTimeEntry(TimeEntry) returns (TimeEntry);
+  rpc ApproveTimeEntry(ApproveTimeEntryRequest) returns (TimeEntry);
+  rpc ListTimeEntries(bac.common.QueryRequest) returns (ListTimeEntriesResponse);
+
+  // Time Off
+  rpc RequestTimeOff(TimeOffRequest) returns (TimeOffRequest);
+  rpc ReviewTimeOff(ReviewTimeOffRequest) returns (TimeOffRequest);
+  rpc GetTimeOffBalance(GetTimeOffBalanceRequest) returns (TimeOffBalance);
+  rpc ListTimeOffRequests(bac.common.QueryRequest) returns (ListTimeOffRequestsResponse);
+
+  // Performance
+  rpc CreatePerformanceReview(PerformanceReview) returns (PerformanceReview);
+  rpc GetPerformanceReview(GetPerformanceReviewRequest) returns (PerformanceReview);
+  rpc UpdatePerformanceReview(PerformanceReview) returns (PerformanceReview);
+  rpc ListPerformanceReviews(bac.common.QueryRequest) returns (ListPerformanceReviewsResponse);
+
+  rpc CreateGoal(Goal) returns (Goal);
+  rpc GetGoal(GetGoalRequest) returns (Goal);
+  rpc UpdateGoal(Goal) returns (Goal);
+  rpc ListGoals(bac.common.QueryRequest) returns (ListGoalsResponse);
+
+  // Recruitment
+  rpc CreateJobPosting(JobPosting) returns (JobPosting);
+  rpc GetJobPosting(GetJobPostingRequest) returns (JobPosting);
+  rpc UpdateJobPosting(JobPosting) returns (JobPosting);
+  rpc ListJobPostings(bac.common.QueryRequest) returns (ListJobPostingsResponse);
+
+  rpc CreateApplication(Application) returns (Application);
+  rpc GetApplication(GetApplicationRequest) returns (Application);
+  rpc UpdateApplication(Application) returns (Application);
+  rpc ListApplications(bac.common.QueryRequest) returns (ListApplicationsResponse);
+
+  // Benefits
+  rpc CreateBenefit(Benefit) returns (Benefit);
+  rpc EnrollInBenefit(EnrollInBenefitRequest) returns (EmployeeBenefit);
+  rpc ListBenefits(bac.common.QueryRequest) returns (ListBenefitsResponse);
+  rpc ListEmployeeBenefits(ListEmployeeBenefitsRequest) returns (ListEmployeeBenefitsResponse);
+}
+
+// Request/Response messages
+message GetEmployeeRequest {
+  string id = 1;
+}
+
+message TerminateEmployeeRequest {
+  string id = 1;
+  bac.common.Timestamp termination_date = 2;
+  string reason = 3;
+}
+
+message ListEmployeesResponse {
+  repeated Employee employees = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetDepartmentRequest {
+  string id = 1;
+}
+
+message ListDepartmentsResponse {
+  repeated Department departments = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetPayrollRunRequest {
+  string id = 1;
+}
+
+message ProcessPayrollRequest {
+  string payroll_run_id = 1;
+}
+
+message ListPayrollRunsResponse {
+  repeated PayrollRun payroll_runs = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetPaycheckRequest {
+  string id = 1;
+}
+
+message ClockInRequest {
+  string employee_id = 1;
+  bac.common.Timestamp timestamp = 2;
+  string project_id = 3;
+}
+
+message ClockOutRequest {
+  string time_entry_id = 1;
+  bac.common.Timestamp timestamp = 2;
+  string notes = 3;
+}
+
+message ApproveTimeEntryRequest {
+  string id = 1;
+  bool approved = 2;
+  string notes = 3;
+}
+
+message ListTimeEntriesResponse {
+  repeated TimeEntry entries = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ReviewTimeOffRequest {
+  string id = 1;
+  bool approved = 2;
+  string notes = 3;
+}
+
+message GetTimeOffBalanceRequest {
+  string employee_id = 1;
+  string type = 2;
+  int32 year = 3;
+}
+
+message ListTimeOffRequestsResponse {
+  repeated TimeOffRequest requests = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetPerformanceReviewRequest {
+  string id = 1;
+}
+
+message ListPerformanceReviewsResponse {
+  repeated PerformanceReview reviews = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetGoalRequest {
+  string id = 1;
+}
+
+message ListGoalsResponse {
+  repeated Goal goals = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetJobPostingRequest {
+  string id = 1;
+}
+
+message ListJobPostingsResponse {
+  repeated JobPosting postings = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetApplicationRequest {
+  string id = 1;
+}
+
+message ListApplicationsResponse {
+  repeated Application applications = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message EnrollInBenefitRequest {
+  string employee_id = 1;
+  string benefit_id = 2;
+  bac.common.Timestamp enrollment_date = 3;
+  repeated string dependents = 4;
+}
+
+message ListBenefitsResponse {
+  repeated Benefit benefits = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ListEmployeeBenefitsRequest {
+  string employee_id = 1;
+}
+
+message ListEmployeeBenefitsResponse {
+  repeated EmployeeBenefit benefits = 1;
+  bac.common.PaginationResponse pagination = 2;
+}

@@ -1,0 +1,165 @@
+syntax = "proto3";
+
+package bac.analytics;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/analytics";
+
+message Dashboard {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated Widget widgets = 5;
+  string layout = 6; // JSON string of layout configuration
+  bool is_default = 7;
+  repeated string shared_with = 8;
+  bac.common.AuditInfo audit = 9;
+}
+
+message Widget {
+  string id = 1;
+  string type = 2; // chart, table, metric, map
+  string title = 3;
+  string data_source = 4;
+  string query = 5;
+  string visualization_config = 6; // JSON
+  map<string, string> filters = 7;
+  int32 refresh_interval = 8; // seconds
+}
+
+message Report {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string category = 5; // sales, financial, operations, custom
+  string query = 6;
+  repeated ReportColumn columns = 7;
+  repeated ReportFilter filters = 8;
+  string schedule = 9; // cron expression
+  repeated string recipients = 10;
+  string format = 11; // pdf, excel, csv
+  bac.common.Timestamp last_run = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message ReportColumn {
+  string name = 1;
+  string label = 2;
+  string type = 3; // string, number, date, currency
+  string aggregation = 4; // sum, avg, count, min, max
+  int32 sort_order = 5;
+}
+
+message ReportFilter {
+  string field = 1;
+  string operator = 2;
+  repeated string values = 3;
+}
+
+message Metric {
+  string id = 1;
+  string name = 2;
+  string description = 3;
+  double value = 4;
+  double previous_value = 5;
+  double change = 6;
+  double change_percent = 7;
+  string trend = 8; // up, down, stable
+  string unit = 9;
+  bac.common.Timestamp calculated_at = 10;
+}
+
+message DataExport {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string data_source = 4;
+  string query = 5;
+  string format = 6; // csv, json, parquet
+  string status = 7; // pending, processing, completed, failed
+  string file_url = 8;
+  int64 row_count = 9;
+  bac.common.Timestamp requested_at = 10;
+  bac.common.Timestamp completed_at = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+service AnalyticsService {
+  rpc CreateDashboard(Dashboard) returns (Dashboard);
+  rpc GetDashboard(GetDashboardRequest) returns (Dashboard);
+  rpc UpdateDashboard(Dashboard) returns (Dashboard);
+  rpc ListDashboards(bac.common.QueryRequest) returns (ListDashboardsResponse);
+
+  rpc CreateReport(Report) returns (Report);
+  rpc GetReport(GetReportRequest) returns (Report);
+  rpc RunReport(RunReportRequest) returns (RunReportResponse);
+  rpc ScheduleReport(ScheduleReportRequest) returns (Report);
+
+  rpc GetMetrics(GetMetricsRequest) returns (GetMetricsResponse);
+  rpc ExportData(ExportDataRequest) returns (DataExport);
+
+  rpc ExecuteQuery(ExecuteQueryRequest) returns (ExecuteQueryResponse);
+}
+
+message GetDashboardRequest {
+  string id = 1;
+}
+
+message ListDashboardsResponse {
+  repeated Dashboard dashboards = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetReportRequest {
+  string id = 1;
+}
+
+message RunReportRequest {
+  string report_id = 1;
+  map<string, string> parameters = 2;
+}
+
+message RunReportResponse {
+  repeated ReportRow rows = 1;
+  int64 total_rows = 2;
+}
+
+message ReportRow {
+  map<string, string> values = 1;
+}
+
+message ScheduleReportRequest {
+  string report_id = 1;
+  string schedule = 2; // cron expression
+  repeated string recipients = 3;
+}
+
+message GetMetricsRequest {
+  repeated string metric_ids = 1;
+  bac.common.Timestamp start_date = 2;
+  bac.common.Timestamp end_date = 3;
+}
+
+message GetMetricsResponse {
+  repeated Metric metrics = 1;
+}
+
+message ExportDataRequest {
+  string data_source = 1;
+  string query = 2;
+  string format = 3;
+}
+
+message ExecuteQueryRequest {
+  string data_source = 1;
+  string query = 2;
+  int32 limit = 3;
+}
+
+message ExecuteQueryResponse {
+  repeated map<string, string> rows = 1;
+  int64 total_rows = 2;
+}

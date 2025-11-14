@@ -1,0 +1,535 @@
+syntax = "proto3";
+
+package bac.ecommerce;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/ecommerce";
+
+// Product Catalog
+message Product {
+  string id = 1;
+  string tenant_id = 2;
+  string sku = 3;
+  string name = 4;
+  string description = 5;
+  string short_description = 6;
+  string category_id = 7;
+  string brand = 8;
+  repeated string tags = 9;
+  bac.common.Money price = 10;
+  bac.common.Money compare_at_price = 11;
+  bac.common.Money cost = 12;
+  repeated ProductVariant variants = 13;
+  repeated string images = 14;
+  string status = 15; // active, draft, archived
+  bool is_taxable = 16;
+  string tax_code = 17;
+  InventoryTracking inventory = 18;
+  ProductDimensions dimensions = 19;
+  double weight = 20;
+  string weight_unit = 21; // kg, lb, oz, g
+  map<string, string> metadata = 22;
+  SEO seo = 23;
+  bac.common.AuditInfo audit = 24;
+}
+
+message ProductVariant {
+  string id = 1;
+  string sku = 2;
+  string name = 3;
+  bac.common.Money price = 4;
+  bac.common.Money compare_at_price = 5;
+  repeated VariantOption options = 6;
+  string image = 7;
+  int32 inventory_quantity = 8;
+  bool is_available = 9;
+}
+
+message VariantOption {
+  string name = 1; // size, color, material
+  string value = 2; // large, red, cotton
+}
+
+message ProductDimensions {
+  double length = 1;
+  double width = 2;
+  double height = 3;
+  string unit = 4; // in, cm, m, ft
+}
+
+message InventoryTracking {
+  bool track_inventory = 1;
+  int32 quantity = 2;
+  int32 reserved_quantity = 3;
+  int32 available_quantity = 4;
+  int32 reorder_point = 5;
+  int32 reorder_quantity = 6;
+  string location = 7;
+}
+
+message Category {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string slug = 4;
+  string description = 5;
+  string parent_id = 6;
+  string image = 7;
+  int32 sort_order = 8;
+  bool is_active = 9;
+  SEO seo = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message SEO {
+  string title = 1;
+  string description = 2;
+  repeated string keywords = 3;
+  string canonical_url = 4;
+}
+
+// Shopping Cart & Checkout
+message Cart {
+  string id = 1;
+  string tenant_id = 2;
+  string customer_id = 3;
+  string session_id = 4;
+  repeated CartItem items = 5;
+  bac.common.Money subtotal = 6;
+  bac.common.Money tax = 7;
+  bac.common.Money shipping = 8;
+  bac.common.Money discount = 9;
+  bac.common.Money total = 10;
+  string currency = 11;
+  repeated Discount discounts = 12;
+  bac.common.Timestamp expires_at = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+message CartItem {
+  string id = 1;
+  string product_id = 2;
+  string variant_id = 3;
+  string name = 4;
+  string sku = 5;
+  int32 quantity = 6;
+  bac.common.Money unit_price = 7;
+  bac.common.Money total = 8;
+  string image = 9;
+  map<string, string> attributes = 10;
+}
+
+message Discount {
+  string id = 1;
+  string code = 2;
+  string type = 3; // percentage, fixed_amount, free_shipping
+  double value = 4;
+  bac.common.Money amount = 5;
+}
+
+// Orders
+message Order {
+  string id = 1;
+  string tenant_id = 2;
+  string order_number = 3;
+  string customer_id = 4;
+  string email = 5;
+  bac.common.Timestamp order_date = 6;
+  string status = 7; // pending, processing, shipped, delivered, cancelled, refunded
+  string payment_status = 8; // pending, paid, partially_refunded, refunded, failed
+  string fulfillment_status = 9; // unfulfilled, partially_fulfilled, fulfilled
+  repeated OrderItem items = 10;
+  bac.common.Money subtotal = 11;
+  bac.common.Money tax = 12;
+  bac.common.Money shipping = 13;
+  bac.common.Money discount = 14;
+  bac.common.Money total = 15;
+  string currency = 16;
+  bac.common.Address billing_address = 17;
+  bac.common.Address shipping_address = 18;
+  ShippingMethod shipping_method = 19;
+  PaymentMethod payment_method = 20;
+  repeated OrderNote notes = 21;
+  repeated Fulfillment fulfillments = 22;
+  repeated Transaction transactions = 23;
+  map<string, string> metadata = 24;
+  bac.common.AuditInfo audit = 25;
+}
+
+message OrderItem {
+  string id = 1;
+  string product_id = 2;
+  string variant_id = 3;
+  string name = 4;
+  string sku = 5;
+  int32 quantity = 6;
+  int32 quantity_fulfilled = 7;
+  bac.common.Money unit_price = 8;
+  bac.common.Money total = 9;
+  double tax_rate = 10;
+  bac.common.Money tax = 11;
+  string image = 12;
+  bool is_taxable = 13;
+  bool requires_shipping = 14;
+}
+
+message OrderNote {
+  string id = 1;
+  string note = 2;
+  string author = 3;
+  bool is_customer_visible = 4;
+  bac.common.Timestamp created_at = 5;
+}
+
+message ShippingMethod {
+  string id = 1;
+  string name = 2;
+  string code = 3;
+  bac.common.Money rate = 4;
+  int32 estimated_days = 5;
+  string carrier = 6;
+}
+
+message PaymentMethod {
+  string id = 1;
+  string type = 2; // credit_card, debit_card, paypal, stripe, bank_transfer
+  string last_four = 3;
+  string brand = 4; // visa, mastercard, amex
+  string expiry = 5;
+}
+
+// Fulfillment & Shipping
+message Fulfillment {
+  string id = 1;
+  string order_id = 2;
+  string status = 3; // pending, in_progress, shipped, delivered, failed
+  repeated FulfillmentItem items = 4;
+  string tracking_number = 5;
+  string tracking_url = 6;
+  string carrier = 7;
+  string shipping_method = 8;
+  bac.common.Timestamp shipped_at = 9;
+  bac.common.Timestamp delivered_at = 10;
+  bac.common.Address shipping_address = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message FulfillmentItem {
+  string order_item_id = 1;
+  string product_id = 2;
+  int32 quantity = 3;
+}
+
+// Payments & Transactions
+message Transaction {
+  string id = 1;
+  string order_id = 2;
+  string type = 3; // charge, refund, authorization, capture
+  string status = 4; // pending, success, failed, cancelled
+  bac.common.Money amount = 5;
+  string currency = 6;
+  string gateway = 7; // stripe, paypal, square
+  string gateway_transaction_id = 8;
+  string payment_method = 9;
+  string error_code = 10;
+  string error_message = 11;
+  map<string, string> metadata = 12;
+  bac.common.Timestamp processed_at = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+message Refund {
+  string id = 1;
+  string order_id = 2;
+  string transaction_id = 3;
+  bac.common.Money amount = 4;
+  string reason = 5;
+  repeated RefundItem items = 6;
+  bool restock_items = 7;
+  string status = 8; // pending, completed, failed
+  bac.common.AuditInfo audit = 9;
+}
+
+message RefundItem {
+  string order_item_id = 1;
+  int32 quantity = 2;
+  bac.common.Money amount = 3;
+}
+
+// Customers
+message EcommerceCustomer {
+  string id = 1;
+  string tenant_id = 2;
+  string email = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string phone = 6;
+  repeated bac.common.Address addresses = 7;
+  string default_address_id = 8;
+  bool accepts_marketing = 9;
+  string customer_group = 10;
+  repeated string tags = 11;
+  bac.common.Money total_spent = 12;
+  int32 order_count = 13;
+  bac.common.Timestamp last_order_date = 14;
+  map<string, string> metadata = 15;
+  bac.common.AuditInfo audit = 16;
+}
+
+// Promotions & Discounts
+message Promotion {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string code = 4;
+  string type = 5; // percentage, fixed_amount, buy_x_get_y, free_shipping
+  double value = 6;
+  string applies_to = 7; // all, specific_products, specific_categories
+  repeated string product_ids = 8;
+  repeated string category_ids = 9;
+  bac.common.Money minimum_purchase_amount = 10;
+  int32 usage_limit = 11;
+  int32 usage_limit_per_customer = 12;
+  int32 usage_count = 13;
+  bac.common.Timestamp start_date = 14;
+  bac.common.Timestamp end_date = 15;
+  bool is_active = 16;
+  bac.common.AuditInfo audit = 17;
+}
+
+// Reviews & Ratings
+message ProductReview {
+  string id = 1;
+  string tenant_id = 2;
+  string product_id = 3;
+  string customer_id = 4;
+  string order_id = 5;
+  int32 rating = 6; // 1-5
+  string title = 7;
+  string comment = 8;
+  string status = 9; // pending, approved, rejected
+  bool is_verified_purchase = 10;
+  int32 helpful_count = 11;
+  bac.common.Timestamp reviewed_at = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+// eCommerce Service
+service EcommerceService {
+  // Products
+  rpc CreateProduct(Product) returns (Product);
+  rpc GetProduct(GetProductRequest) returns (Product);
+  rpc UpdateProduct(Product) returns (Product);
+  rpc DeleteProduct(DeleteProductRequest) returns (bac.common.Response);
+  rpc ListProducts(bac.common.QueryRequest) returns (ListProductsResponse);
+  rpc UpdateInventory(UpdateInventoryRequest) returns (Product);
+
+  // Categories
+  rpc CreateCategory(Category) returns (Category);
+  rpc GetCategory(GetCategoryRequest) returns (Category);
+  rpc UpdateCategory(Category) returns (Category);
+  rpc DeleteCategory(DeleteCategoryRequest) returns (bac.common.Response);
+  rpc ListCategories(bac.common.QueryRequest) returns (ListCategoriesResponse);
+
+  // Shopping Cart
+  rpc CreateCart(Cart) returns (Cart);
+  rpc GetCart(GetCartRequest) returns (Cart);
+  rpc AddToCart(AddToCartRequest) returns (Cart);
+  rpc UpdateCartItem(UpdateCartItemRequest) returns (Cart);
+  rpc RemoveFromCart(RemoveFromCartRequest) returns (Cart);
+  rpc ApplyDiscount(ApplyDiscountRequest) returns (Cart);
+  rpc ClearCart(ClearCartRequest) returns (bac.common.Response);
+
+  // Orders
+  rpc CreateOrder(CreateOrderRequest) returns (Order);
+  rpc GetOrder(GetOrderRequest) returns (Order);
+  rpc UpdateOrder(Order) returns (Order);
+  rpc CancelOrder(CancelOrderRequest) returns (Order);
+  rpc ListOrders(bac.common.QueryRequest) returns (ListOrdersResponse);
+
+  // Fulfillment
+  rpc CreateFulfillment(Fulfillment) returns (Fulfillment);
+  rpc UpdateFulfillment(Fulfillment) returns (Fulfillment);
+  rpc CancelFulfillment(CancelFulfillmentRequest) returns (bac.common.Response);
+
+  // Payments
+  rpc ProcessPayment(ProcessPaymentRequest) returns (Transaction);
+  rpc CapturePayment(CapturePaymentRequest) returns (Transaction);
+  rpc RefundPayment(RefundPaymentRequest) returns (Refund);
+
+  // Customers
+  rpc CreateEcommerceCustomer(EcommerceCustomer) returns (EcommerceCustomer);
+  rpc GetEcommerceCustomer(GetEcommerceCustomerRequest) returns (EcommerceCustomer);
+  rpc UpdateEcommerceCustomer(EcommerceCustomer) returns (EcommerceCustomer);
+  rpc ListEcommerceCustomers(bac.common.QueryRequest) returns (ListEcommerceCustomersResponse);
+
+  // Promotions
+  rpc CreatePromotion(Promotion) returns (Promotion);
+  rpc GetPromotion(GetPromotionRequest) returns (Promotion);
+  rpc UpdatePromotion(Promotion) returns (Promotion);
+  rpc ListPromotions(bac.common.QueryRequest) returns (ListPromotionsResponse);
+  rpc ValidatePromotion(ValidatePromotionRequest) returns (ValidatePromotionResponse);
+
+  // Reviews
+  rpc CreateReview(ProductReview) returns (ProductReview);
+  rpc GetReview(GetReviewRequest) returns (ProductReview);
+  rpc UpdateReview(ProductReview) returns (ProductReview);
+  rpc ListReviews(bac.common.QueryRequest) returns (ListReviewsResponse);
+  rpc ModerateReview(ModerateReviewRequest) returns (ProductReview);
+}
+
+// Request/Response messages
+message GetProductRequest {
+  string id = 1;
+}
+
+message DeleteProductRequest {
+  string id = 1;
+}
+
+message ListProductsResponse {
+  repeated Product products = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message UpdateInventoryRequest {
+  string product_id = 1;
+  string variant_id = 2;
+  int32 quantity_change = 3;
+  string reason = 4; // sale, restock, adjustment, damaged
+}
+
+message GetCategoryRequest {
+  string id = 1;
+}
+
+message DeleteCategoryRequest {
+  string id = 1;
+}
+
+message ListCategoriesResponse {
+  repeated Category categories = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetCartRequest {
+  string id = 1;
+}
+
+message AddToCartRequest {
+  string cart_id = 1;
+  string product_id = 2;
+  string variant_id = 3;
+  int32 quantity = 4;
+}
+
+message UpdateCartItemRequest {
+  string cart_id = 1;
+  string item_id = 2;
+  int32 quantity = 3;
+}
+
+message RemoveFromCartRequest {
+  string cart_id = 1;
+  string item_id = 2;
+}
+
+message ApplyDiscountRequest {
+  string cart_id = 1;
+  string discount_code = 2;
+}
+
+message ClearCartRequest {
+  string cart_id = 1;
+}
+
+message CreateOrderRequest {
+  string cart_id = 1;
+  string customer_id = 2;
+  bac.common.Address billing_address = 3;
+  bac.common.Address shipping_address = 4;
+  string shipping_method_id = 5;
+  string payment_method_id = 6;
+}
+
+message GetOrderRequest {
+  string id = 1;
+}
+
+message CancelOrderRequest {
+  string id = 1;
+  string reason = 2;
+}
+
+message ListOrdersResponse {
+  repeated Order orders = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message CancelFulfillmentRequest {
+  string id = 1;
+}
+
+message ProcessPaymentRequest {
+  string order_id = 1;
+  string payment_method_id = 2;
+  bac.common.Money amount = 3;
+}
+
+message CapturePaymentRequest {
+  string transaction_id = 1;
+  bac.common.Money amount = 2;
+}
+
+message RefundPaymentRequest {
+  string order_id = 1;
+  string transaction_id = 2;
+  bac.common.Money amount = 3;
+  string reason = 4;
+  repeated RefundItem items = 5;
+  bool restock_items = 6;
+}
+
+message GetEcommerceCustomerRequest {
+  string id = 1;
+}
+
+message ListEcommerceCustomersResponse {
+  repeated EcommerceCustomer customers = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetPromotionRequest {
+  string id = 1;
+}
+
+message ListPromotionsResponse {
+  repeated Promotion promotions = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ValidatePromotionRequest {
+  string code = 1;
+  string cart_id = 2;
+}
+
+message ValidatePromotionResponse {
+  bool is_valid = 1;
+  Promotion promotion = 2;
+  string error_message = 3;
+}
+
+message GetReviewRequest {
+  string id = 1;
+}
+
+message ListReviewsResponse {
+  repeated ProductReview reviews = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message ModerateReviewRequest {
+  string id = 1;
+  string status = 2; // approved, rejected
+}

@@ -1,0 +1,607 @@
+syntax = "proto3";
+
+package bac.erp;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/erp";
+
+// General Ledger
+message Account {
+  string id = 1;
+  string tenant_id = 2;
+  string account_number = 3;
+  string name = 4;
+  string type = 5; // asset, liability, equity, revenue, expense
+  string subtype = 6; // checking, savings, accounts_receivable, etc.
+  string parent_account_id = 7;
+  string currency = 8;
+  bool is_active = 9;
+  bool is_system_account = 10;
+  bac.common.Money current_balance = 11;
+  map<string, string> custom_fields = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+message JournalEntry {
+  string id = 1;
+  string tenant_id = 2;
+  string entry_number = 3;
+  bac.common.Timestamp entry_date = 4;
+  string period = 5; // YYYY-MM format
+  string description = 6;
+  string reference = 7;
+  string status = 8; // draft, posted, void
+  repeated JournalEntryLine lines = 9;
+  bac.common.Money total_debit = 10;
+  bac.common.Money total_credit = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message JournalEntryLine {
+  string id = 1;
+  string account_id = 2;
+  string description = 3;
+  bac.common.Money debit = 4;
+  bac.common.Money credit = 5;
+  string department_id = 6;
+  string project_id = 7;
+  map<string, string> dimensions = 8; // For multi-dimensional reporting
+}
+
+// Accounts Payable
+message Vendor {
+  string id = 1;
+  string tenant_id = 2;
+  string vendor_number = 3;
+  string name = 4;
+  string email = 5;
+  string phone = 6;
+  string website = 7;
+  bac.common.Address address = 8;
+  string payment_terms = 9; // net_30, net_60, due_on_receipt, etc.
+  string payment_method = 10; // check, ach, wire, credit_card
+  string tax_id = 11;
+  bool is_1099_vendor = 12;
+  bac.common.Money credit_limit = 13;
+  string account_number = 14;
+  string status = 15; // active, inactive
+  bac.common.AuditInfo audit = 16;
+}
+
+message Bill {
+  string id = 1;
+  string tenant_id = 2;
+  string bill_number = 3;
+  string vendor_id = 4;
+  bac.common.Timestamp bill_date = 5;
+  bac.common.Timestamp due_date = 6;
+  string payment_terms = 7;
+  repeated BillLineItem line_items = 8;
+  bac.common.Money subtotal = 9;
+  bac.common.Money tax = 10;
+  bac.common.Money total = 11;
+  bac.common.Money amount_paid = 12;
+  bac.common.Money balance_due = 13;
+  string status = 14; // draft, open, paid, void, overdue
+  string memo = 15;
+  repeated string attachments = 16;
+  bac.common.AuditInfo audit = 17;
+}
+
+message BillLineItem {
+  string id = 1;
+  string account_id = 2;
+  string description = 3;
+  int32 quantity = 4;
+  bac.common.Money unit_price = 5;
+  bac.common.Money amount = 6;
+  string department_id = 7;
+  string project_id = 8;
+}
+
+message Payment {
+  string id = 1;
+  string tenant_id = 2;
+  string payment_number = 3;
+  bac.common.Timestamp payment_date = 4;
+  string payment_method = 5; // check, ach, wire, credit_card, cash
+  string vendor_id = 6;
+  string customer_id = 7; // For AR payments
+  bac.common.Money amount = 8;
+  string reference = 9;
+  string memo = 10;
+  repeated PaymentApplication applications = 11;
+  string bank_account_id = 12;
+  string status = 13; // pending, cleared, void
+  bac.common.AuditInfo audit = 14;
+}
+
+message PaymentApplication {
+  string bill_id = 1;
+  string invoice_id = 2;
+  bac.common.Money amount = 3;
+  bac.common.Money discount = 4;
+}
+
+// Accounts Receivable
+message Customer {
+  string id = 1;
+  string tenant_id = 2;
+  string customer_number = 3;
+  string name = 4;
+  string email = 5;
+  string phone = 6;
+  bac.common.Address billing_address = 7;
+  bac.common.Address shipping_address = 8;
+  string payment_terms = 9;
+  string payment_method = 10;
+  bac.common.Money credit_limit = 11;
+  string tax_id = 12;
+  string currency = 13;
+  string status = 14;
+  bac.common.AuditInfo audit = 15;
+}
+
+message Invoice {
+  string id = 1;
+  string tenant_id = 2;
+  string invoice_number = 3;
+  string customer_id = 4;
+  bac.common.Timestamp invoice_date = 5;
+  bac.common.Timestamp due_date = 6;
+  string payment_terms = 7;
+  repeated InvoiceLineItem line_items = 8;
+  bac.common.Money subtotal = 9;
+  bac.common.Money tax = 10;
+  bac.common.Money discount = 11;
+  bac.common.Money total = 12;
+  bac.common.Money amount_paid = 13;
+  bac.common.Money balance_due = 14;
+  string status = 15; // draft, sent, viewed, paid, void, overdue
+  string memo = 16;
+  repeated string attachments = 17;
+  bac.common.AuditInfo audit = 18;
+}
+
+message InvoiceLineItem {
+  string id = 1;
+  string product_id = 2;
+  string description = 3;
+  int32 quantity = 4;
+  bac.common.Money unit_price = 5;
+  bac.common.Money amount = 6;
+  double tax_rate = 7;
+  string account_id = 8;
+}
+
+// Cash Flow Management
+message CashAccount {
+  string id = 1;
+  string tenant_id = 2;
+  string account_id = 3; // Link to GL account
+  string bank_name = 4;
+  string account_number = 5;
+  string account_type = 6; // checking, savings, money_market
+  string currency = 7;
+  bac.common.Money current_balance = 8;
+  bac.common.Money available_balance = 9;
+  bac.common.Timestamp last_reconciled = 10;
+  bool auto_reconcile = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message CashFlowForecast {
+  string id = 1;
+  string tenant_id = 2;
+  bac.common.Timestamp forecast_date = 3;
+  string period = 4; // daily, weekly, monthly
+  bac.common.Money opening_balance = 5;
+  bac.common.Money cash_inflows = 6;
+  bac.common.Money cash_outflows = 7;
+  bac.common.Money net_cash_flow = 8;
+  bac.common.Money closing_balance = 9;
+  repeated CashFlowItem inflow_items = 10;
+  repeated CashFlowItem outflow_items = 11;
+  string confidence = 12; // high, medium, low
+  map<string, string> ai_insights = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+message CashFlowItem {
+  string category = 1; // receivables, payables, payroll, taxes, etc.
+  string description = 2;
+  bac.common.Money amount = 3;
+  bac.common.Timestamp expected_date = 4;
+  double probability = 5; // 0-100
+  string source_type = 6; // invoice, bill, payroll_run, etc.
+  string source_id = 7;
+}
+
+message BankReconciliation {
+  string id = 1;
+  string tenant_id = 2;
+  string cash_account_id = 3;
+  bac.common.Timestamp statement_date = 4;
+  bac.common.Money statement_balance = 5;
+  bac.common.Money book_balance = 6;
+  bac.common.Money difference = 7;
+  string status = 8; // in_progress, completed, reviewed
+  repeated ReconciliationItem items = 9;
+  bac.common.AuditInfo audit = 10;
+}
+
+message ReconciliationItem {
+  string transaction_id = 1;
+  bac.common.Timestamp transaction_date = 2;
+  string description = 3;
+  bac.common.Money amount = 4;
+  bool is_reconciled = 5;
+  string match_status = 6; // matched, unmatched, suggested_match
+}
+
+// Fixed Assets
+message FixedAsset {
+  string id = 1;
+  string tenant_id = 2;
+  string asset_number = 3;
+  string name = 4;
+  string category = 5; // equipment, vehicles, buildings, furniture, etc.
+  bac.common.Timestamp purchase_date = 6;
+  bac.common.Money purchase_price = 7;
+  bac.common.Money salvage_value = 8;
+  int32 useful_life_years = 9;
+  string depreciation_method = 10; // straight_line, declining_balance, units_of_production
+  bac.common.Money accumulated_depreciation = 11;
+  bac.common.Money book_value = 12;
+  string location = 13;
+  string assigned_to = 14;
+  string status = 15; // active, disposed, sold
+  bac.common.Timestamp disposal_date = 16;
+  bac.common.Money disposal_proceeds = 17;
+  bac.common.AuditInfo audit = 18;
+}
+
+// Budgeting
+message Budget {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  int32 fiscal_year = 4;
+  string period_type = 5; // monthly, quarterly, yearly
+  string status = 6; // draft, active, locked, archived
+  repeated BudgetLine lines = 7;
+  bac.common.Money total_revenue = 8;
+  bac.common.Money total_expenses = 9;
+  bac.common.Money net_income = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message BudgetLine {
+  string id = 1;
+  string account_id = 2;
+  string department_id = 3;
+  string period = 4; // YYYY-MM format
+  bac.common.Money budgeted_amount = 5;
+  bac.common.Money actual_amount = 6;
+  bac.common.Money variance = 7;
+  double variance_percent = 8;
+}
+
+// Tax
+message TaxRate {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string type = 4; // sales_tax, vat, gst, etc.
+  double rate = 5;
+  string country = 6;
+  string state = 7;
+  bool is_compound = 8;
+  bac.common.Timestamp effective_date = 9;
+  bac.common.Timestamp expiration_date = 10;
+  bool is_active = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+// ERP Service
+service ERPService {
+  // General Ledger
+  rpc CreateAccount(Account) returns (Account);
+  rpc GetAccount(GetAccountRequest) returns (Account);
+  rpc UpdateAccount(Account) returns (Account);
+  rpc ListAccounts(bac.common.QueryRequest) returns (ListAccountsResponse);
+  rpc GetAccountBalance(GetAccountBalanceRequest) returns (GetAccountBalanceResponse);
+
+  rpc CreateJournalEntry(JournalEntry) returns (JournalEntry);
+  rpc PostJournalEntry(PostJournalEntryRequest) returns (JournalEntry);
+  rpc VoidJournalEntry(VoidJournalEntryRequest) returns (JournalEntry);
+  rpc ListJournalEntries(bac.common.QueryRequest) returns (ListJournalEntriesResponse);
+
+  // Accounts Payable
+  rpc CreateVendor(Vendor) returns (Vendor);
+  rpc GetVendor(GetVendorRequest) returns (Vendor);
+  rpc UpdateVendor(Vendor) returns (Vendor);
+  rpc ListVendors(bac.common.QueryRequest) returns (ListVendorsResponse);
+
+  rpc CreateBill(Bill) returns (Bill);
+  rpc GetBill(GetBillRequest) returns (Bill);
+  rpc UpdateBill(Bill) returns (Bill);
+  rpc PayBill(PayBillRequest) returns (Payment);
+  rpc ListBills(bac.common.QueryRequest) returns (ListBillsResponse);
+
+  // Accounts Receivable
+  rpc CreateCustomer(Customer) returns (Customer);
+  rpc GetCustomer(GetCustomerRequest) returns (Customer);
+  rpc UpdateCustomer(Customer) returns (Customer);
+  rpc ListCustomers(bac.common.QueryRequest) returns (ListCustomersResponse);
+
+  rpc CreateInvoice(Invoice) returns (Invoice);
+  rpc GetInvoice(GetInvoiceRequest) returns (Invoice);
+  rpc UpdateInvoice(Invoice) returns (Invoice);
+  rpc SendInvoice(SendInvoiceRequest) returns (bac.common.Response);
+  rpc RecordPayment(RecordPaymentRequest) returns (Payment);
+  rpc ListInvoices(bac.common.QueryRequest) returns (ListInvoicesResponse);
+
+  // Cash Flow Management
+  rpc CreateCashAccount(CashAccount) returns (CashAccount);
+  rpc GetCashAccount(GetCashAccountRequest) returns (CashAccount);
+  rpc ListCashAccounts(bac.common.QueryRequest) returns (ListCashAccountsResponse);
+
+  rpc GenerateCashFlowForecast(GenerateCashFlowForecastRequest) returns (CashFlowForecast);
+  rpc GetCashFlowForecast(GetCashFlowForecastRequest) returns (CashFlowForecast);
+  rpc UpdateCashFlowForecast(CashFlowForecast) returns (CashFlowForecast);
+
+  rpc CreateBankReconciliation(BankReconciliation) returns (BankReconciliation);
+  rpc GetBankReconciliation(GetBankReconciliationRequest) returns (BankReconciliation);
+  rpc CompleteBankReconciliation(CompleteBankReconciliationRequest) returns (BankReconciliation);
+
+  // Fixed Assets
+  rpc CreateFixedAsset(FixedAsset) returns (FixedAsset);
+  rpc GetFixedAsset(GetFixedAssetRequest) returns (FixedAsset);
+  rpc UpdateFixedAsset(FixedAsset) returns (FixedAsset);
+  rpc CalculateDepreciation(CalculateDepreciationRequest) returns (CalculateDepreciationResponse);
+  rpc ListFixedAssets(bac.common.QueryRequest) returns (ListFixedAssetsResponse);
+
+  // Budgeting
+  rpc CreateBudget(Budget) returns (Budget);
+  rpc GetBudget(GetBudgetRequest) returns (Budget);
+  rpc UpdateBudget(Budget) returns (Budget);
+  rpc ListBudgets(bac.common.QueryRequest) returns (ListBudgetsResponse);
+  rpc GetBudgetVsActual(GetBudgetVsActualRequest) returns (GetBudgetVsActualResponse);
+
+  // Reporting
+  rpc GetTrialBalance(GetTrialBalanceRequest) returns (GetTrialBalanceResponse);
+  rpc GetIncomeStatement(GetIncomeStatementRequest) returns (GetIncomeStatementResponse);
+  rpc GetBalanceSheet(GetBalanceSheetRequest) returns (GetBalanceSheetResponse);
+  rpc GetCashFlowStatement(GetCashFlowStatementRequest) returns (GetCashFlowStatementResponse);
+}
+
+// Request/Response messages
+message GetAccountRequest {
+  string id = 1;
+}
+
+message ListAccountsResponse {
+  repeated Account accounts = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetAccountBalanceRequest {
+  string account_id = 1;
+  bac.common.Timestamp as_of_date = 2;
+}
+
+message GetAccountBalanceResponse {
+  string account_id = 1;
+  bac.common.Money balance = 2;
+  bac.common.Money debit_total = 3;
+  bac.common.Money credit_total = 4;
+}
+
+message PostJournalEntryRequest {
+  string id = 1;
+}
+
+message VoidJournalEntryRequest {
+  string id = 1;
+}
+
+message ListJournalEntriesResponse {
+  repeated JournalEntry entries = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetVendorRequest {
+  string id = 1;
+}
+
+message ListVendorsResponse {
+  repeated Vendor vendors = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetBillRequest {
+  string id = 1;
+}
+
+message PayBillRequest {
+  string bill_id = 1;
+  bac.common.Timestamp payment_date = 2;
+  bac.common.Money amount = 3;
+  string payment_method = 4;
+  string bank_account_id = 5;
+}
+
+message ListBillsResponse {
+  repeated Bill bills = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetCustomerRequest {
+  string id = 1;
+}
+
+message ListCustomersResponse {
+  repeated Customer customers = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetInvoiceRequest {
+  string id = 1;
+}
+
+message SendInvoiceRequest {
+  string invoice_id = 1;
+  string recipient_email = 2;
+  string message = 3;
+}
+
+message RecordPaymentRequest {
+  string invoice_id = 1;
+  bac.common.Timestamp payment_date = 2;
+  bac.common.Money amount = 3;
+  string payment_method = 4;
+}
+
+message ListInvoicesResponse {
+  repeated Invoice invoices = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetCashAccountRequest {
+  string id = 1;
+}
+
+message ListCashAccountsResponse {
+  repeated CashAccount accounts = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GenerateCashFlowForecastRequest {
+  bac.common.Timestamp start_date = 1;
+  bac.common.Timestamp end_date = 2;
+  string period = 3; // daily, weekly, monthly
+  repeated string cash_account_ids = 4;
+}
+
+message GetCashFlowForecastRequest {
+  string id = 1;
+}
+
+message GetBankReconciliationRequest {
+  string id = 1;
+}
+
+message CompleteBankReconciliationRequest {
+  string id = 1;
+}
+
+message GetFixedAssetRequest {
+  string id = 1;
+}
+
+message CalculateDepreciationRequest {
+  string asset_id = 1;
+  bac.common.Timestamp as_of_date = 2;
+}
+
+message CalculateDepreciationResponse {
+  bac.common.Money depreciation_expense = 1;
+  bac.common.Money accumulated_depreciation = 2;
+  bac.common.Money book_value = 3;
+}
+
+message ListFixedAssetsResponse {
+  repeated FixedAsset assets = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetBudgetRequest {
+  string id = 1;
+}
+
+message ListBudgetsResponse {
+  repeated Budget budgets = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetBudgetVsActualRequest {
+  string budget_id = 1;
+  bac.common.Timestamp start_date = 2;
+  bac.common.Timestamp end_date = 3;
+}
+
+message GetBudgetVsActualResponse {
+  repeated BudgetLine lines = 1;
+  bac.common.Money total_budgeted = 2;
+  bac.common.Money total_actual = 3;
+  bac.common.Money total_variance = 4;
+  double variance_percent = 5;
+}
+
+message GetTrialBalanceRequest {
+  bac.common.Timestamp as_of_date = 1;
+}
+
+message GetTrialBalanceResponse {
+  repeated TrialBalanceLine lines = 1;
+  bac.common.Money total_debits = 2;
+  bac.common.Money total_credits = 3;
+}
+
+message TrialBalanceLine {
+  string account_id = 1;
+  string account_number = 2;
+  string account_name = 3;
+  bac.common.Money debit = 4;
+  bac.common.Money credit = 5;
+}
+
+message GetIncomeStatementRequest {
+  bac.common.Timestamp start_date = 1;
+  bac.common.Timestamp end_date = 2;
+}
+
+message GetIncomeStatementResponse {
+  bac.common.Money total_revenue = 1;
+  bac.common.Money total_expenses = 2;
+  bac.common.Money net_income = 3;
+  repeated FinancialStatementLine revenue_lines = 4;
+  repeated FinancialStatementLine expense_lines = 5;
+}
+
+message GetBalanceSheetRequest {
+  bac.common.Timestamp as_of_date = 1;
+}
+
+message GetBalanceSheetResponse {
+  bac.common.Money total_assets = 1;
+  bac.common.Money total_liabilities = 2;
+  bac.common.Money total_equity = 3;
+  repeated FinancialStatementLine asset_lines = 4;
+  repeated FinancialStatementLine liability_lines = 5;
+  repeated FinancialStatementLine equity_lines = 6;
+}
+
+message GetCashFlowStatementRequest {
+  bac.common.Timestamp start_date = 1;
+  bac.common.Timestamp end_date = 2;
+}
+
+message GetCashFlowStatementResponse {
+  bac.common.Money operating_activities = 1;
+  bac.common.Money investing_activities = 2;
+  bac.common.Money financing_activities = 3;
+  bac.common.Money net_change = 4;
+  repeated FinancialStatementLine operating_lines = 5;
+  repeated FinancialStatementLine investing_lines = 6;
+  repeated FinancialStatementLine financing_lines = 7;
+}
+
+message FinancialStatementLine {
+  string label = 1;
+  bac.common.Money amount = 2;
+  int32 indent_level = 3;
+  bool is_total = 4;
+}

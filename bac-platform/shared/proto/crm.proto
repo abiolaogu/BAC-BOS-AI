@@ -1,0 +1,315 @@
+syntax = "proto3";
+
+package bac.crm;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/crm";
+
+// Contact management
+message Contact {
+  string id = 1;
+  string tenant_id = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string email = 5;
+  string phone = 6;
+  string mobile = 7;
+  string title = 8;
+  string company_id = 9;
+  string company_name = 10;
+  bac.common.Address address = 11;
+  string source = 12; // web, referral, trade_show, etc.
+  string status = 13; // active, inactive, do_not_contact
+  repeated string tags = 14;
+  map<string, string> custom_fields = 15;
+  bac.common.AuditInfo audit = 16;
+}
+
+message Company {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string industry = 4;
+  string website = 5;
+  string phone = 6;
+  int32 employee_count = 7;
+  bac.common.Money annual_revenue = 8;
+  bac.common.Address address = 9;
+  string status = 10;
+  repeated string tags = 11;
+  map<string, string> custom_fields = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+// Lead management
+message Lead {
+  string id = 1;
+  string tenant_id = 2;
+  string first_name = 3;
+  string last_name = 4;
+  string email = 5;
+  string phone = 6;
+  string company = 7;
+  string title = 8;
+  string source = 9;
+  string status = 10; // new, contacted, qualified, unqualified
+  int32 score = 11; // Lead score 0-100
+  string assigned_to = 12; // User ID
+  bac.common.Money estimated_value = 13;
+  bac.common.Timestamp expected_close_date = 14;
+  map<string, string> custom_fields = 15;
+  bac.common.AuditInfo audit = 16;
+}
+
+// Opportunity management
+message Opportunity {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string company_id = 4;
+  string contact_id = 5;
+  string stage = 6; // prospecting, qualification, proposal, negotiation, closed_won, closed_lost
+  bac.common.Money amount = 7;
+  double probability = 8; // 0-100
+  bac.common.Timestamp expected_close_date = 9;
+  bac.common.Timestamp actual_close_date = 10;
+  string assigned_to = 11;
+  string lead_source = 12;
+  string next_step = 13;
+  string description = 14;
+  repeated string competitors = 15;
+  map<string, string> custom_fields = 16;
+  bac.common.AuditInfo audit = 17;
+}
+
+// Sales activity
+message Activity {
+  string id = 1;
+  string tenant_id = 2;
+  string type = 3; // call, email, meeting, task, note
+  string subject = 4;
+  string description = 5;
+  string status = 6; // scheduled, completed, cancelled
+  bac.common.Timestamp due_date = 7;
+  bac.common.Timestamp completed_date = 8;
+  string assigned_to = 9;
+  string related_to_type = 10; // contact, lead, opportunity, company
+  string related_to_id = 11;
+  int32 duration_minutes = 12;
+  string outcome = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+// Quote/CPQ
+message Quote {
+  string id = 1;
+  string tenant_id = 2;
+  string quote_number = 3;
+  string opportunity_id = 4;
+  string contact_id = 5;
+  string company_id = 6;
+  bac.common.Timestamp quote_date = 7;
+  bac.common.Timestamp expiration_date = 8;
+  string status = 9; // draft, sent, accepted, rejected, expired
+  repeated QuoteLineItem line_items = 10;
+  bac.common.Money subtotal = 11;
+  bac.common.Money tax = 12;
+  bac.common.Money discount = 13;
+  bac.common.Money total = 14;
+  string terms = 15;
+  string notes = 16;
+  bac.common.AuditInfo audit = 17;
+}
+
+message QuoteLineItem {
+  string id = 1;
+  string product_id = 2;
+  string description = 3;
+  int32 quantity = 4;
+  bac.common.Money unit_price = 5;
+  double discount_percent = 6;
+  bac.common.Money total = 7;
+}
+
+// Sales forecast
+message SalesForecast {
+  string id = 1;
+  string tenant_id = 2;
+  string period = 3; // monthly, quarterly, yearly
+  int32 year = 4;
+  int32 quarter = 5;
+  int32 month = 6;
+  string user_id = 7;
+  string team_id = 8;
+  bac.common.Money forecasted_amount = 9;
+  bac.common.Money pipeline_amount = 10;
+  bac.common.Money closed_amount = 11;
+  double win_rate = 12;
+  int32 opportunity_count = 13;
+  bac.common.AuditInfo audit = 14;
+}
+
+// CRM Service
+service CRMService {
+  // Contacts
+  rpc CreateContact(Contact) returns (Contact);
+  rpc GetContact(GetContactRequest) returns (Contact);
+  rpc UpdateContact(Contact) returns (Contact);
+  rpc DeleteContact(DeleteContactRequest) returns (bac.common.Response);
+  rpc ListContacts(bac.common.QueryRequest) returns (ListContactsResponse);
+
+  // Companies
+  rpc CreateCompany(Company) returns (Company);
+  rpc GetCompany(GetCompanyRequest) returns (Company);
+  rpc UpdateCompany(Company) returns (Company);
+  rpc DeleteCompany(DeleteCompanyRequest) returns (bac.common.Response);
+  rpc ListCompanies(bac.common.QueryRequest) returns (ListCompaniesResponse);
+
+  // Leads
+  rpc CreateLead(Lead) returns (Lead);
+  rpc GetLead(GetLeadRequest) returns (Lead);
+  rpc UpdateLead(Lead) returns (Lead);
+  rpc ConvertLead(ConvertLeadRequest) returns (ConvertLeadResponse);
+  rpc DeleteLead(DeleteLeadRequest) returns (bac.common.Response);
+  rpc ListLeads(bac.common.QueryRequest) returns (ListLeadsResponse);
+
+  // Opportunities
+  rpc CreateOpportunity(Opportunity) returns (Opportunity);
+  rpc GetOpportunity(GetOpportunityRequest) returns (Opportunity);
+  rpc UpdateOpportunity(Opportunity) returns (Opportunity);
+  rpc DeleteOpportunity(DeleteOpportunityRequest) returns (bac.common.Response);
+  rpc ListOpportunities(bac.common.QueryRequest) returns (ListOpportunitiesResponse);
+
+  // Activities
+  rpc CreateActivity(Activity) returns (Activity);
+  rpc GetActivity(GetActivityRequest) returns (Activity);
+  rpc UpdateActivity(Activity) returns (Activity);
+  rpc DeleteActivity(DeleteActivityRequest) returns (bac.common.Response);
+  rpc ListActivities(bac.common.QueryRequest) returns (ListActivitiesResponse);
+
+  // Quotes
+  rpc CreateQuote(Quote) returns (Quote);
+  rpc GetQuote(GetQuoteRequest) returns (Quote);
+  rpc UpdateQuote(Quote) returns (Quote);
+  rpc SendQuote(SendQuoteRequest) returns (bac.common.Response);
+  rpc AcceptQuote(AcceptQuoteRequest) returns (bac.common.Response);
+  rpc ListQuotes(bac.common.QueryRequest) returns (ListQuotesResponse);
+
+  // Sales Forecast
+  rpc GetSalesForecast(GetSalesForecastRequest) returns (SalesForecast);
+  rpc GenerateForecast(GenerateForecastRequest) returns (SalesForecast);
+}
+
+// Request/Response messages
+message GetContactRequest {
+  string id = 1;
+}
+
+message DeleteContactRequest {
+  string id = 1;
+}
+
+message ListContactsResponse {
+  repeated Contact contacts = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetCompanyRequest {
+  string id = 1;
+}
+
+message DeleteCompanyRequest {
+  string id = 1;
+}
+
+message ListCompaniesResponse {
+  repeated Company companies = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetLeadRequest {
+  string id = 1;
+}
+
+message DeleteLeadRequest {
+  string id = 1;
+}
+
+message ConvertLeadRequest {
+  string lead_id = 1;
+  bool create_opportunity = 2;
+  bool create_company = 3;
+}
+
+message ConvertLeadResponse {
+  Contact contact = 1;
+  Company company = 2;
+  Opportunity opportunity = 3;
+}
+
+message ListLeadsResponse {
+  repeated Lead leads = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetOpportunityRequest {
+  string id = 1;
+}
+
+message DeleteOpportunityRequest {
+  string id = 1;
+}
+
+message ListOpportunitiesResponse {
+  repeated Opportunity opportunities = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetActivityRequest {
+  string id = 1;
+}
+
+message DeleteActivityRequest {
+  string id = 1;
+}
+
+message ListActivitiesResponse {
+  repeated Activity activities = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetQuoteRequest {
+  string id = 1;
+}
+
+message SendQuoteRequest {
+  string quote_id = 1;
+  string recipient_email = 2;
+  string message = 3;
+}
+
+message AcceptQuoteRequest {
+  string quote_id = 1;
+}
+
+message ListQuotesResponse {
+  repeated Quote quotes = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetSalesForecastRequest {
+  string period = 1;
+  int32 year = 2;
+  int32 quarter = 3;
+  int32 month = 4;
+  string user_id = 5;
+  string team_id = 6;
+}
+
+message GenerateForecastRequest {
+  string period = 1;
+  int32 year = 2;
+  int32 quarter = 3;
+  int32 month = 4;
+}

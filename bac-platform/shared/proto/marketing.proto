@@ -1,0 +1,167 @@
+syntax = "proto3";
+
+package bac.marketing;
+
+import "common.proto";
+
+option go_package = "github.com/abiolaogu/BAC-BOS-AI/shared/proto/marketing";
+
+message Campaign {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  string type = 5; // email, sms, social, web
+  string status = 6; // draft, scheduled, running, paused, completed
+  bac.common.Timestamp start_date = 7;
+  bac.common.Timestamp end_date = 8;
+  bac.common.Money budget = 9;
+  bac.common.Money spent = 10;
+  string target_audience = 11;
+  repeated string segments = 12;
+  CampaignMetrics metrics = 13;
+  map<string, string> custom_fields = 14;
+  bac.common.AuditInfo audit = 15;
+}
+
+message CampaignMetrics {
+  int32 sent = 1;
+  int32 delivered = 2;
+  int32 opened = 3;
+  int32 clicked = 4;
+  int32 converted = 5;
+  double open_rate = 6;
+  double click_rate = 7;
+  double conversion_rate = 8;
+  bac.common.Money revenue = 9;
+  double roi = 10;
+}
+
+message EmailTemplate {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string subject = 4;
+  string from_name = 5;
+  string from_email = 6;
+  string reply_to = 7;
+  string html_content = 8;
+  string text_content = 9;
+  repeated string tags = 10;
+  bool is_active = 11;
+  bac.common.AuditInfo audit = 12;
+}
+
+message EmailCampaign {
+  string id = 1;
+  string campaign_id = 2;
+  string template_id = 3;
+  string subject = 4;
+  string from_name = 5;
+  string from_email = 6;
+  bac.common.Timestamp scheduled_at = 7;
+  bac.common.Timestamp sent_at = 8;
+  int32 recipient_count = 9;
+  EmailMetrics metrics = 10;
+  bac.common.AuditInfo audit = 11;
+}
+
+message EmailMetrics {
+  int32 sent = 1;
+  int32 delivered = 2;
+  int32 bounced = 3;
+  int32 opened = 4;
+  int32 clicked = 5;
+  int32 unsubscribed = 6;
+  int32 complained = 7;
+}
+
+message Segment {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string description = 4;
+  repeated SegmentCriteria criteria = 5;
+  int32 member_count = 6;
+  bac.common.AuditInfo audit = 7;
+}
+
+message SegmentCriteria {
+  string field = 1;
+  string operator = 2;
+  repeated string values = 3;
+}
+
+message LandingPage {
+  string id = 1;
+  string tenant_id = 2;
+  string name = 3;
+  string url = 4;
+  string title = 5;
+  string description = 6;
+  string html_content = 7;
+  string status = 8; // draft, published, archived
+  bac.common.Timestamp published_at = 9;
+  int32 visit_count = 10;
+  int32 conversion_count = 11;
+  double conversion_rate = 12;
+  bac.common.AuditInfo audit = 13;
+}
+
+service MarketingService {
+  rpc CreateCampaign(Campaign) returns (Campaign);
+  rpc GetCampaign(GetCampaignRequest) returns (Campaign);
+  rpc UpdateCampaign(Campaign) returns (Campaign);
+  rpc ListCampaigns(bac.common.QueryRequest) returns (ListCampaignsResponse);
+
+  rpc CreateEmailTemplate(EmailTemplate) returns (EmailTemplate);
+  rpc GetEmailTemplate(GetEmailTemplateRequest) returns (EmailTemplate);
+  rpc ListEmailTemplates(bac.common.QueryRequest) returns (ListEmailTemplatesResponse);
+
+  rpc SendEmailCampaign(SendEmailCampaignRequest) returns (EmailCampaign);
+  rpc GetEmailCampaignMetrics(GetEmailCampaignMetricsRequest) returns (EmailMetrics);
+
+  rpc CreateSegment(Segment) returns (Segment);
+  rpc ListSegments(bac.common.QueryRequest) returns (ListSegmentsResponse);
+
+  rpc CreateLandingPage(LandingPage) returns (LandingPage);
+  rpc PublishLandingPage(PublishLandingPageRequest) returns (LandingPage);
+}
+
+message GetCampaignRequest {
+  string id = 1;
+}
+
+message ListCampaignsResponse {
+  repeated Campaign campaigns = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message GetEmailTemplateRequest {
+  string id = 1;
+}
+
+message ListEmailTemplatesResponse {
+  repeated EmailTemplate templates = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message SendEmailCampaignRequest {
+  string campaign_id = 1;
+  string template_id = 2;
+  repeated string recipient_ids = 3;
+  bac.common.Timestamp scheduled_at = 4;
+}
+
+message GetEmailCampaignMetricsRequest {
+  string email_campaign_id = 1;
+}
+
+message ListSegmentsResponse {
+  repeated Segment segments = 1;
+  bac.common.PaginationResponse pagination = 2;
+}
+
+message PublishLandingPageRequest {
+  string id = 1;
+}
