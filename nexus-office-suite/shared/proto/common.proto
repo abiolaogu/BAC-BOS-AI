@@ -1,0 +1,100 @@
+syntax = "proto3";
+
+package nexus.common;
+
+option go_package = "github.com/nexus/office-suite/shared/proto/common";
+
+// Common messages used across all services
+
+message User {
+  string id = 1;
+  string tenant_id = 2;
+  string email = 3;
+  string first_name = 4;
+  string last_name = 5;
+  string avatar_url = 6;
+  int64 created_at = 7;
+}
+
+message Tenant {
+  string id = 1;
+  string name = 2;
+  string subdomain = 3;
+  string plan = 4;                   // free, pro, enterprise
+  string status = 5;                 // active, suspended, cancelled
+  int64 created_at = 6;
+  TenantSettings settings = 7;
+}
+
+message TenantSettings {
+  int64 storage_quota_bytes = 1;
+  int32 max_users = 2;
+  bool ai_features_enabled = 3;
+  bool custom_branding_enabled = 4;
+}
+
+message ErrorResponse {
+  int32 code = 1;
+  string message = 2;
+  repeated FieldError errors = 3;
+}
+
+message FieldError {
+  string field = 1;
+  string message = 2;
+}
+
+message SuccessResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+  bool has_more = 5;
+}
+
+message FileMetadata {
+  string id = 1;
+  string filename = 2;
+  string mime_type = 3;
+  int64 size_bytes = 4;
+  string storage_path = 5;
+  string url = 6;
+}
+
+message ActivityLog {
+  string id = 1;
+  string user_id = 2;
+  string action = 3;
+  string resource_type = 4;
+  string resource_id = 5;
+  string metadata_json = 6;
+  string ip_address = 7;
+  string user_agent = 8;
+  int64 created_at = 9;
+}
+
+// Notification messages
+message Notification {
+  string id = 1;
+  string user_id = 2;
+  string type = 3;                   // info, warning, error, success
+  string title = 4;
+  string message = 5;
+  string action_url = 6;
+  bool is_read = 7;
+  int64 created_at = 8;
+}
+
+// Webhook payload
+message WebhookPayload {
+  string webhook_id = 1;
+  string event = 2;
+  string timestamp = 3;
+  string data_json = 4;
+  string signature = 5;
+}
