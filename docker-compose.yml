@@ -100,6 +100,58 @@ services:
       kafka:
         condition: service_started
 
+  # Integration Services
+  google-workspace-integration:
+    build:
+      context: ./bac-platform/services/integrations/google-workspace
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8080"
+    environment:
+      - PORT=8080
+      - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8080/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  odoo-integration:
+    build:
+      context: ./bac-platform/services/integrations/odoo
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8081"
+    environment:
+      - PORT=8081
+      - ODOO_BASE_URL=${ODOO_BASE_URL:-https://demo.odoo.com}
+      - ODOO_DATABASE=${ODOO_DATABASE:-demo}
+      - ODOO_USERNAME=${ODOO_USERNAME}
+      - ODOO_PASSWORD=${ODOO_PASSWORD}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8081/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
+  zoho-integration:
+    build:
+      context: ./bac-platform/services/integrations/zoho
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8082"
+    environment:
+      - PORT=8082
+      - ZOHO_BASE_URL=https://www.zohoapis.com
+      - ZOHO_CLIENT_ID=${ZOHO_CLIENT_ID}
+      - ZOHO_CLIENT_SECRET=${ZOHO_CLIENT_SECRET}
+      - ZOHO_REFRESH_TOKEN=${ZOHO_REFRESH_TOKEN}
+    healthcheck:
+      test: ["CMD", "wget", "--spider", "-q", "http://localhost:8082/health"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+
   # Observability
   prometheus:
     image: prom/prometheus:latest
