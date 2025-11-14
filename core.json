@@ -1,0 +1,125 @@
+{
+  "crm": {
+    "oss": [
+      "Odoo CRM",
+      "SuiteCRM"
+    ],
+    "proprietary": [
+      "Salesforce",
+      "HubSpot"
+    ],
+    "webhooks": [
+      "lead.created",
+      "deal.stage_changed"
+    ]
+  },
+  "erp": {
+    "oss": [
+      "Odoo",
+      "ERPNext"
+    ],
+    "proprietary": [
+      "NetSuite",
+      "SAP S/4HANA"
+    ],
+    "webhooks": [
+      "invoice.paid",
+      "po.approved"
+    ]
+  },
+  "helpdesk": {
+    "oss": [
+      "Zammad"
+    ],
+    "proprietary": [
+      "Zendesk",
+      "Freshdesk"
+    ],
+    "webhooks": [
+      "ticket.created",
+      "ticket.closed"
+    ]
+  },
+  "marketing": {
+    "oss": [
+      "Mautic"
+    ],
+    "proprietary": [
+      "Marketo",
+      "SFMC"
+    ],
+    "webhooks": [
+      "campaign.sent",
+      "click"
+    ]
+  },
+  "finance": {
+    "oss": [
+      "ERPNext Accounting"
+    ],
+    "proprietary": [
+      "QuickBooks",
+      "Xero"
+    ],
+    "webhooks": [
+      "txn.posted"
+    ]
+  },
+  "hris": {
+    "oss": [
+      "OrangeHRM"
+    ],
+    "proprietary": [
+      "BambooHR",
+      "Workday"
+    ],
+    "webhooks": [
+      "hire",
+      "terminate"
+    ]
+  },
+  "observability": {
+    "oss": [
+      "Prometheus",
+      "Grafana",
+      "Loki"
+    ],
+    "proprietary": [
+      "Datadog",
+      "NewRelic"
+    ],
+    "webhooks": [
+      "alert.fire"
+    ]
+  },
+  "security": {
+    "oss": [
+      "Wazuh",
+      "TheHive"
+    ],
+    "proprietary": [
+      "CrowdStrike",
+      "Splunk"
+    ],
+    "webhooks": [
+      "incident.open"
+    ]
+  },
+  "vector_db": {
+    "oss": [
+      "Qdrant",
+      "Weaviate"
+    ],
+    "proprietary": [
+      "Pinecone"
+    ],
+    "webhooks": []
+  },
+  "graph_db": {
+    "oss": [
+      "Neo4j"
+    ],
+    "proprietary": [],
+    "webhooks": []
+  }
+}

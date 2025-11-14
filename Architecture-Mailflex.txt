@@ -1,0 +1,109 @@
+# Mailflex Global Platform Software Architecture
+
+## 1. Introduction
+
+The Mailflex Global Platform is a secure, scalable, and multi-region email and collaboration solution built on a robust, open-source-centric architecture. It is designed for high availability, performance, and stringent security, leveraging a distributed infrastructure and a comprehensive application stack.
+
+## 2. Global Architecture Overview
+
+Mailflex employs a global architecture utilizing Anycast IP routing to advertise the same virtual IPs from multiple data centers across Africa, Europe, North America, and Asia. This ensures users connect to the nearest healthy region for optimal performance and resilience.
+
+*   **Anycast IP Routing:** FRRouting (FRR) and MetalLB in BGP mode advertise VIPs for IMAP, SMTP, ActiveSync from Kubernetes ingress nodes.
+*   **Regional Route Reflectors:** Manage BGP announcements for failover and optimal routing.
+*   **Cloudflare Edge:** Acts as the primary ingress point, providing Area 1 Email Security and SASE/DLP before traffic reaches the core infrastructure.
+
+## 3. System Components
+
+The Mailflex platform is composed of several interconnected layers and services:
+
+### 3.1 Edge & Networking
+*   **Internet Clients:** Crossbox, Thunderbird, iOS Mail, Android Gmail.
+*   **Cloudflare Edge:** Provides Area 1 Email Security and SASE/DLP.
+*   **Anycast VIPs:** Managed by FRR + MetalLB (BGP) and Route Reflectors.
+*   **NGINX Ingress:** Handles inbound traffic routing within Kubernetes.
+
+### 3.2 Core Mail Plane
+*   **Stalwart Mail Server:** Core mail server supporting SMTP, IMAP, JMAP, and Sieve protocols.
+*   **Rspamd Filtering:** Spam and malware filtering, integrated with DragonFlyDB.
+*   **Z-Push ActiveSync Bridge:** Provides ActiveSync compatibility for mobile clients (email, calendar, contacts).
+
+### 3.3 Data Layer
+*   **YugabyteDB Cluster:** Distributed SQL database (PostgreSQL-compatible) for user metadata, routing information, and quotas across regions.
+*   **MinIO (Per-Tenant S3):** Object storage for isolated, secure message blobs, backups, and logs, with per-tenant S3 buckets.
+*   **Longhorn Block Storage:** iSCSI ReadWriteOnce (RWO) volumes, used for IMAP backends.
+*   **NFS Share Manager:** ReadWriteMany (RWX) POSIX-compliant storage for multi-node access.
+*   **DragonFlyDB:** Used by Rspamd for filtering.
+
+### 3.4 Identity & Access Management
+*   **Samba AD Domain Controllers:** Authoritative directory for user and group identities (LDAP, Kerberos).
+*   **Keycloak SSO Layer:** Modern SSO provider supporting OIDC, SAML, and OAuth2, federating to Samba AD.
+*   **OAuth2 for Email Protocols:** Extends secure authentication to IMAP/JMAP.
+*   **Federation:** Keycloak federates identity to OpenStack, Rancher, AWX.
+
+### 3.5 Collaboration & Groupware
+*   **Baikal:** Calendar and contacts server.
+*   **Seafile:** File synchronization and sharing.
+*   **Collabora/ONLYOFFICE:** Online office suite for document editing.
+*   **Jitsi:** Video conferencing solution.
+*   **OpenProject:** Project management platform.
+*   **Joplin:** Note-taking application.
+
+### 3.6 Automation & Operations
+*   **Kubernetes (Rancher-managed):** Container orchestration platform.
+*   **OpenStack:** Provides compute and network infrastructure.
+*   **AWX:** Automation engine for infrastructure management and operational tasks.
+*   **Kafka:** Event streaming platform for event and workflow automation.
+*   **n8n:** Workflow automation tool, triggered by Kafka events.
+*   **Langflow/LangChain:** Used for the AI Assistant (Mailflex Copilot) for intent recognition and RAG.
+
+### 3.7 CI/CD & Observability
+*   **GitOps with Argo CD:** Declarative configuration management from Git for continuous deployment.
+*   **Argo Rollouts:** Enables canary rollouts and phased deployments.
+*   **Keptn & Dynatrace:** Monitor Service Level Objectives (SLOs) and trigger automated rollbacks.
+*   **Prometheus:** Monitoring system.
+*   **Loki:** Log aggregation system.
+*   **Grafana:** Data visualization and dashboarding.
+
+### 3.8 Email Marketing Layer
+*   **Mautic:** Marketing automation platform.
+*   **SMS Gateway:** For multi-channel communication.
+*   **ClickHouse:** Analytics and Business Intelligence database.
+*   **OpenSIPS:** UC/uCaaS Integration.
+
+## 4. Data Flow
+
+### 4.1 Inbound Mail Data Path
+1.  **Internet** ->
+2.  **Cloudflare Area 1** (Pre-delivery anti-phishing/spam) ->
+3.  **Anycast VIP** ->
+4.  **NGINX Ingress** ->
+5.  **Stalwart** (Core mail server).
+    *   Message content stored in **MinIO (per-tenant S3)**.
+    *   Metadata stored in **YugabyteDB**.
+
+### 4.2 Assistant Intent Flow
+1.  **Stalwart** (Mail events) ->
+2.  **Kafka** (mail.inbound topic) ->
+3.  **Langflow/LangChain** (Intent recognition, entity extraction using RAG) ->
+4.  **Kafka** (assistant.intent topic) ->
+5.  **n8n Workflow** (Triggers actions based on intent).
+    *   **Outputs:** Notify (Matrix/Email), Vikunja (Tasks), Joplin (Notes).
+
+### 4.3 Email Marketing Flow
+1.  **Marketing Layer (Mautic)** ->
+2.  **SMS Gateway** (Optional) ->
+3.  **Delivery Layer (Stalwart)** ->
+4.  **Analytics & BI (Kafka/ClickHouse)**.
+
+## 5. Technology Stack Summary
+
+*   **Core Mail:** Stalwart, Rspamd, Z-Push.
+*   **Data Services:** YugabyteDB, MinIO, Longhorn, NFS, DragonFlyDB.
+*   **Identity:** Samba AD, Keycloak.
+*   **Collaboration:** Baikal, Seafile, Collabora/ONLYOFFICE, Jitsi, OpenProject, Joplin.
+*   **Networking:** Cloudflare Edge, FRR, MetalLB, ingress-nginx.
+*   **Orchestration/Infra:** Kubernetes (Rancher), OpenStack, AWX.
+*   **Automation/AI:** Kafka, n8n, Langflow, LangChain.
+*   **CI/CD:** GitOps, Argo CD, Argo Rollouts.
+*   **Observability:** Keptn, Dynatrace, Prometheus, Loki, Grafana.
+*   **Marketing:** Mautic, ClickHouse, OpenSIPS.
