@@ -1,0 +1,401 @@
+version: '3.8'
+
+services:
+  # ============================================================================
+  # DATABASE SERVICES
+  # ============================================================================
+
+  postgres:
+    image: postgres:15-alpine
+    container_name: nexus-postgres
+    environment:
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: nexus_dev_password
+      POSTGRES_DB: nexus_office
+      POSTGRES_MULTIPLE_DATABASES: writer,sheets,slides,mail,calendar,drive,forms,meet,tasks,notes
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./database/init:/docker-entrypoint-initdb.d
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # CACHE & MESSAGE QUEUE
+  # ============================================================================
+
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    command: redis-server --appendonly yes --requirepass nexus_redis_password
+    ports:
+      - "6379:6379"
+    volumes:
+      - redis_data:/data
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "--raw", "incr", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  kafka:
+    image: confluentinc/cp-kafka:latest
+    container_name: nexus-kafka
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+    ports:
+      - "9092:9092"
+    depends_on:
+      - zookeeper
+    networks:
+      - nexus-network
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:latest
+    container_name: nexus-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    ports:
+      - "2181:2181"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # OBJECT STORAGE
+  # ============================================================================
+
+  minio:
+    image: minio/minio:latest
+    container_name: nexus-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: nexus_minio
+      MINIO_ROOT_PASSWORD: nexus_minio_password
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    volumes:
+      - minio_data:/data
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 30s
+      timeout: 20s
+      retries: 3
+
+  # ============================================================================
+  # SEARCH ENGINE
+  # ============================================================================
+
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: nexus-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - xpack.security.enabled=false
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+    ports:
+      - "9200:9200"
+    volumes:
+      - elasticsearch_data:/usr/share/elasticsearch/data
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # BACKEND MICROSERVICES
+  # ============================================================================
+
+  writer-service:
+    build:
+      context: ./backend/writer-service
+      dockerfile: Dockerfile
+    container_name: nexus-writer-service
+    environment:
+      - PORT=8091
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/writer?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/0
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8091:8091"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  sheets-service:
+    build:
+      context: ./backend/sheets-service
+      dockerfile: Dockerfile
+    container_name: nexus-sheets-service
+    environment:
+      - PORT=8092
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/sheets?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/1
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8092:8092"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  slides-service:
+    build:
+      context: ./backend/slides-service
+      dockerfile: Dockerfile
+    container_name: nexus-slides-service
+    environment:
+      - PORT=8093
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/slides?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/2
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8093:8093"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  mail-service:
+    build:
+      context: ./backend/mail-service
+      dockerfile: Dockerfile
+    container_name: nexus-mail-service
+    environment:
+      - PORT=8094
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/mail?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/3
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8094:8094"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  calendar-service:
+    build:
+      context: ./backend/calendar-service
+      dockerfile: Dockerfile
+    container_name: nexus-calendar-service
+    environment:
+      - PORT=8095
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/calendar?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/4
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8095:8095"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  drive-service:
+    build:
+      context: ./backend/drive-service
+      dockerfile: Dockerfile
+    container_name: nexus-drive-service
+    environment:
+      - PORT=8096
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/drive?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/5
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - "8096:8096"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+      - elasticsearch
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  forms-service:
+    build:
+      context: ./backend/forms-service
+      dockerfile: Dockerfile
+    container_name: nexus-forms-service
+    environment:
+      - PORT=8097
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/forms?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/6
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8097:8097"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  meet-service:
+    build:
+      context: ./backend/meet-service
+      dockerfile: Dockerfile
+    container_name: nexus-meet-service
+    environment:
+      - PORT=8098
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/meet?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/7
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8098:8098"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  tasks-service:
+    build:
+      context: ./backend/tasks-service
+      dockerfile: Dockerfile
+    container_name: nexus-tasks-service
+    environment:
+      - PORT=8099
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/tasks?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/8
+      - KAFKA_BROKERS=kafka:9092
+    ports:
+      - "8099:8099"
+    depends_on:
+      - postgres
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  notes-service:
+    build:
+      context: ./backend/notes-service
+      dockerfile: Dockerfile
+    container_name: nexus-notes-service
+    environment:
+      - PORT=8100
+      - DATABASE_URL=postgres://nexus:nexus_dev_password@postgres:5432/notes?sslmode=disable
+      - REDIS_URL=redis://:nexus_redis_password@redis:6379/9
+      - MINIO_ENDPOINT=minio:9000
+      - MINIO_ACCESS_KEY=nexus_minio
+      - MINIO_SECRET_KEY=nexus_minio_password
+      - KAFKA_BROKERS=kafka:9092
+      - ELASTICSEARCH_URL=http://elasticsearch:9200
+    ports:
+      - "8100:8100"
+    depends_on:
+      - postgres
+      - redis
+      - minio
+      - kafka
+      - elasticsearch
+    networks:
+      - nexus-network
+    restart: unless-stopped
+
+  # ============================================================================
+  # MONITORING & OBSERVABILITY
+  # ============================================================================
+
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexus-prometheus
+    volumes:
+      - ./monitoring/prometheus.yml:/etc/prometheus/prometheus.yml
+      - prometheus_data:/prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+    ports:
+      - "9090:9090"
+    networks:
+      - nexus-network
+
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexus-grafana
+    environment:
+      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_USERS_ALLOW_SIGN_UP=false
+    ports:
+      - "3001:3000"
+    volumes:
+      - grafana_data:/var/lib/grafana
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+    depends_on:
+      - prometheus
+    networks:
+      - nexus-network
+
+# ============================================================================
+# NETWORKS
+# ============================================================================
+
+networks:
+  nexus-network:
+    driver: bridge
+
+# ============================================================================
+# VOLUMES
+# ============================================================================
+
+volumes:
+  postgres_data:
+  redis_data:
+  minio_data:
+  elasticsearch_data:
+  prometheus_data:
+  grafana_data:
