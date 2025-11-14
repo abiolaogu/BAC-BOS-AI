@@ -240,6 +240,44 @@ See [docs/ops/deployment.md](docs/ops/deployment.md) for full guide.
 
 ---
 
+## 🔗 Platform Integrations
+
+NEXUS now includes comprehensive integrations with leading SaaS platforms:
+
+### Google Workspace Integration
+- **Gmail**: Send/receive emails, manage labels
+- **Calendar**: Create events, manage schedules
+- **Drive**: Upload/download files, manage folders
+- **Docs/Sheets/Slides**: Create and edit documents programmatically
+- **Forms**: Create forms and collect responses
+- **Admin SDK**: Manage users and organizational units
+
+### Odoo ERP Integration
+- **CRM**: Lead and opportunity management
+- **Sales**: Sales orders, quotations
+- **Accounting**: Invoicing, general ledger
+- **Inventory**: Stock management, warehouses
+- **HR**: Employee management, recruitment
+- **Manufacturing**: Production orders, Bill of Materials
+
+### Zoho Suite Integration
+- **Zoho CRM**: Contact and deal management
+- **Zoho Books**: Accounting and invoicing
+- **Zoho Mail**: Business email hosting
+- **Zoho Desk**: Customer support ticketing
+- **Zoho People**: HR management
+- **Zoho Inventory**: Stock and order management
+
+**Integration Endpoints:**
+- Google Workspace: `http://localhost:8083`
+- Odoo: `http://localhost:8084`
+- Zoho: `http://localhost:8085`
+
+📚 See [Integration Documentation](docs/integrations/INTEGRATIONS_OVERVIEW.md) for complete setup and usage guide.
+📖 See [Training Guide](docs/integrations/TRAINING_GUIDE.md) for hands-on tutorials and certification.
+
+---
+
 ## 💡 Key Features
 
 ### 1. Instant Activation
