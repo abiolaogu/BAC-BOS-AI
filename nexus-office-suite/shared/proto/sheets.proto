@@ -1,0 +1,154 @@
+syntax = "proto3";
+
+package nexus.sheets;
+
+option go_package = "github.com/nexus/office-suite/shared/proto/sheets";
+
+// Sheets Service
+service SheetsService {
+  rpc CreateSpreadsheet(CreateSpreadsheetRequest) returns (SpreadsheetResponse);
+  rpc GetSpreadsheet(GetSpreadsheetRequest) returns (SpreadsheetResponse);
+  rpc UpdateSpreadsheet(UpdateSpreadsheetRequest) returns (SpreadsheetResponse);
+  rpc DeleteSpreadsheet(DeleteSpreadsheetRequest) returns (DeleteSpreadsheetResponse);
+  rpc GetCells(GetCellsRequest) returns (GetCellsResponse);
+  rpc UpdateCells(UpdateCellsRequest) returns (UpdateCellsResponse);
+  rpc CalculateFormulas(CalculateFormulasRequest) returns (CalculateFormulasResponse);
+}
+
+// Messages
+message Spreadsheet {
+  string id = 1;
+  string tenant_id = 2;
+  string title = 3;
+  repeated Sheet sheets = 4;
+  string created_by = 5;
+  int64 created_at = 6;
+  int64 updated_at = 7;
+}
+
+message Sheet {
+  string id = 1;
+  string spreadsheet_id = 2;
+  string name = 3;
+  int32 position = 4;
+  int32 row_count = 5;
+  int32 column_count = 6;
+  int32 frozen_rows = 7;
+  int32 frozen_columns = 8;
+}
+
+message Cell {
+  string id = 1;
+  string sheet_id = 2;
+  int32 row_index = 3;
+  int32 column_index = 4;
+  string value = 5;
+  string formula = 6;
+  string data_type = 7;              // string, number, boolean, date, formula, error
+  string formatted_value = 8;
+  CellStyle style = 9;
+  int64 updated_at = 10;
+}
+
+message CellStyle {
+  bool bold = 1;
+  bool italic = 2;
+  bool underline = 3;
+  int32 font_size = 4;
+  string font_family = 5;
+  string text_color = 6;
+  string background_color = 7;
+  string horizontal_align = 8;
+  string vertical_align = 9;
+}
+
+message CreateSpreadsheetRequest {
+  string tenant_id = 1;
+  string title = 2;
+  repeated SheetConfig sheets = 3;
+  string created_by = 4;
+}
+
+message SheetConfig {
+  string name = 1;
+  int32 row_count = 2;
+  int32 column_count = 3;
+}
+
+message GetSpreadsheetRequest {
+  string spreadsheet_id = 1;
+  string tenant_id = 2;
+}
+
+message UpdateSpreadsheetRequest {
+  string spreadsheet_id = 1;
+  string tenant_id = 2;
+  string title = 3;
+}
+
+message DeleteSpreadsheetRequest {
+  string spreadsheet_id = 1;
+  string tenant_id = 2;
+}
+
+message DeleteSpreadsheetResponse {
+  bool success = 1;
+}
+
+message GetCellsRequest {
+  string spreadsheet_id = 1;
+  string sheet_id = 2;
+  string range = 3;                  // A1 notation
+  string tenant_id = 4;
+}
+
+message GetCellsResponse {
+  string range = 1;
+  repeated CellRow rows = 2;
+}
+
+message CellRow {
+  int32 row_index = 1;
+  repeated Cell cells = 2;
+}
+
+message UpdateCellsRequest {
+  string spreadsheet_id = 1;
+  string sheet_id = 2;
+  repeated CellUpdate updates = 3;
+  string tenant_id = 4;
+}
+
+message CellUpdate {
+  string range = 1;
+  string value = 2;
+  string formula = 3;
+  CellStyle style = 4;
+}
+
+message UpdateCellsResponse {
+  int32 updated_cells = 1;
+  repeated string updated_ranges = 2;
+}
+
+message CalculateFormulasRequest {
+  string spreadsheet_id = 1;
+  string sheet_id = 2;
+  string range = 3;
+  string tenant_id = 4;
+}
+
+message CalculateFormulasResponse {
+  int32 calculated_cells = 1;
+  repeated FormulaError errors = 2;
+}
+
+message FormulaError {
+  string cell_reference = 1;
+  string error_code = 2;
+  string error_message = 3;
+}
+
+message SpreadsheetResponse {
+  Spreadsheet spreadsheet = 1;
+}

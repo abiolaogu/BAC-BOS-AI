@@ -1,0 +1,73 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!-- OWASP Dependency Check Configuration -->
+<dependencyCheck xmlns="https://jeremylong.github.io/DependencyCheck/dependency-check.xsd">
+
+    <!-- Project Info -->
+    <project>
+        <name>NEXUS Office Suite</name>
+        <version>1.0.0</version>
+    </project>
+
+    <!-- Scan Configuration -->
+    <scan>
+        <!-- Directories to scan -->
+        <scanPath>services</scanPath>
+        <scanPath>packages</scanPath>
+
+        <!-- File patterns to include -->
+        <include>**/*.js</include>
+        <include>**/*.ts</include>
+        <include>**/package.json</include>
+        <include>**/package-lock.json</include>
+
+        <!-- Exclude patterns -->
+        <exclude>**/node_modules/**</exclude>
+        <exclude>**/dist/**</exclude>
+        <exclude>**/build/**</exclude>
+        <exclude>**/coverage/**</exclude>
+        <exclude>**/*.test.js</exclude>
+        <exclude>**/*.spec.ts</exclude>
+    </scan>
+
+    <!-- Analyzers -->
+    <analyzers>
+        <nodeAudit enabled="true"/>
+        <nodePackage enabled="true"/>
+        <retireJS enabled="true"/>
+        <ossIndex enabled="true"/>
+        <npmCPE enabled="true"/>
+    </analyzers>
+
+    <!-- Database -->
+    <database>
+        <autoUpdate>true</autoUpdate>
+        <updateInterval>7</updateInterval>
+    </database>
+
+    <!-- Suppression File -->
+    <suppressionFile>security/dependency-check-suppressions.xml</suppressionFile>
+
+    <!-- Reports -->
+    <reports>
+        <format>HTML</format>
+        <format>JSON</format>
+        <format>XML</format>
+        <outputDirectory>security/reports</outputDirectory>
+    </reports>
+
+    <!-- Failure Thresholds -->
+    <failBuildOnCVSS>7.0</failBuildOnCVSS>
+
+    <!-- CVE Settings -->
+    <cve>
+        <modifiedUrl>https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-modified.json.gz</modifiedUrl>
+        <baseUrl>https://nvd.nist.gov/feeds/json/cve/1.1/nvdcve-1.1-%d.json.gz</baseUrl>
+        <startYear>2020</startYear>
+    </cve>
+
+    <!-- Hints -->
+    <hints>
+        <hintsFile>security/dependency-check-hints.xml</hintsFile>
+    </hints>
+
+</dependencyCheck>

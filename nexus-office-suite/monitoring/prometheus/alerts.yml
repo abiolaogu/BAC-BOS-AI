@@ -1,0 +1,237 @@
+# Prometheus Alert Rules for NEXUS Office Suite
+
+groups:
+  # System Alerts
+  - name: system_alerts
+    interval: 30s
+    rules:
+      - alert: HighCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: CriticalCPUUsage
+        expr: 100 - (avg by (instance) (irate(node_cpu_seconds_total{mode="idle"}[5m])) * 100) > 95
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical CPU usage on {{ $labels.instance }}"
+          description: "CPU usage is above 95% (current value: {{ $value }}%)"
+
+      - alert: HighMemoryUsage
+        expr: (1 - (node_memory_MemAvailable_bytes / node_memory_MemTotal_bytes)) * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage on {{ $labels.instance }}"
+          description: "Memory usage is above 85% (current value: {{ $value }}%)"
+
+      - alert: DiskSpaceLow
+        expr: (1 - (node_filesystem_avail_bytes / node_filesystem_size_bytes)) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low disk space on {{ $labels.instance }}"
+          description: "Disk usage is above 80% (current value: {{ $value }}%)"
+
+  # Service Alerts
+  - name: service_alerts
+    interval: 30s
+    rules:
+      - alert: ServiceDown
+        expr: up{job=~".*-service"} == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Service {{ $labels.job }} is down"
+          description: "{{ $labels.job }} has been down for more than 1 minute"
+
+      - alert: HighErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High error rate in {{ $labels.job }}"
+          description: "Error rate is above 5% (current value: {{ $value }})"
+
+      - alert: CriticalErrorRate
+        expr: rate(http_requests_total{status=~"5.."}[5m]) > 0.10
+        for: 2m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Critical error rate in {{ $labels.job }}"
+          description: "Error rate is above 10% (current value: {{ $value }})"
+
+      - alert: SlowResponseTime
+        expr: histogram_quantile(0.95, rate(http_request_duration_seconds_bucket[5m])) > 1
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow response times in {{ $labels.job }}"
+          description: "P95 response time is above 1s (current value: {{ $value }}s)"
+
+  # Database Alerts
+  - name: database_alerts
+    interval: 30s
+    rules:
+      - alert: PostgreSQLDown
+        expr: pg_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "PostgreSQL database is down"
+          description: "PostgreSQL has been down for more than 1 minute"
+
+      - alert: HighDatabaseConnections
+        expr: pg_stat_database_numbackends / pg_settings_max_connections * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High database connection usage"
+          description: "Database connections are above 80% (current value: {{ $value }}%)"
+
+      - alert: SlowQueries
+        expr: rate(pg_stat_statements_mean_exec_time[5m]) > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Slow database queries detected"
+          description: "Average query execution time is above 1s (current value: {{ $value }}ms)"
+
+      - alert: DatabaseReplicationLag
+        expr: pg_replication_lag > 10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Database replication lag detected"
+          description: "Replication lag is {{ $value }} seconds"
+
+  # WebSocket Alerts (for Meet service)
+  - name: websocket_alerts
+    interval: 30s
+    rules:
+      - alert: HighWebSocketConnections
+        expr: websocket_connections_total > 1000
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High number of WebSocket connections"
+          description: "WebSocket connections: {{ $value }}"
+
+      - alert: WebSocketDisconnections
+        expr: rate(websocket_disconnections_total[5m]) > 0.10
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High WebSocket disconnection rate"
+          description: "Disconnection rate is above 10% (current value: {{ $value }})"
+
+  # Container Alerts
+  - name: container_alerts
+    interval: 30s
+    rules:
+      - alert: ContainerCPUHigh
+        expr: rate(container_cpu_usage_seconds_total{name!=""}[5m]) * 100 > 80
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High CPU usage in container {{ $labels.name }}"
+          description: "Container CPU usage is above 80% (current value: {{ $value }}%)"
+
+      - alert: ContainerMemoryHigh
+        expr: container_memory_usage_bytes{name!=""} / container_spec_memory_limit_bytes{name!=""} * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High memory usage in container {{ $labels.name }}"
+          description: "Container memory usage is above 85% (current value: {{ $value }}%)"
+
+      - alert: ContainerRestarting
+        expr: rate(kube_pod_container_status_restarts_total[15m]) > 0
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Container {{ $labels.container }} is restarting"
+          description: "Container has restarted {{ $value }} times in the last 15 minutes"
+
+  # Application-Specific Alerts
+  - name: application_alerts
+    interval: 30s
+    rules:
+      - alert: HighDocumentCreationLatency
+        expr: histogram_quantile(0.95, rate(document_creation_duration_seconds_bucket[5m])) > 2
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High document creation latency"
+          description: "P95 document creation time is above 2s (current value: {{ $value }}s)"
+
+      - alert: MeetingConnectionFailures
+        expr: rate(meeting_connection_failures_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High meeting connection failure rate"
+          description: "Meeting connection failures: {{ $value }} per second"
+
+      - alert: FileUploadFailures
+        expr: rate(file_upload_failures_total[5m]) > 0.05
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High file upload failure rate"
+          description: "File upload failures: {{ $value }} per second"
+
+  # Cache Alerts
+  - name: cache_alerts
+    interval: 30s
+    rules:
+      - alert: RedisDown
+        expr: redis_up == 0
+        for: 1m
+        labels:
+          severity: critical
+        annotations:
+          summary: "Redis is down"
+          description: "Redis has been down for more than 1 minute"
+
+      - alert: LowCacheHitRate
+        expr: redis_keyspace_hits_total / (redis_keyspace_hits_total + redis_keyspace_misses_total) < 0.8
+        for: 10m
+        labels:
+          severity: warning
+        annotations:
+          summary: "Low Redis cache hit rate"
+          description: "Cache hit rate is below 80% (current value: {{ $value }})"
+
+      - alert: HighRedisMemory
+        expr: redis_memory_used_bytes / redis_memory_max_bytes * 100 > 85
+        for: 5m
+        labels:
+          severity: warning
+        annotations:
+          summary: "High Redis memory usage"
+          description: "Redis memory usage is above 85% (current value: {{ $value }}%)"

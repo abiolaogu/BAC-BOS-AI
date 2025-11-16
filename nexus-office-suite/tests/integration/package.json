@@ -1,0 +1,41 @@
+{
+  "name": "nexus-integration-tests",
+  "version": "1.0.0",
+  "description": "Integration tests for NEXUS Office Suite",
+  "private": true,
+  "scripts": {
+    "test": "jest",
+    "test:watch": "jest --watch",
+    "test:coverage": "jest --coverage",
+    "test:verbose": "jest --verbose",
+    "test:api": "jest tests/api",
+    "test:websocket": "jest tests/websocket",
+    "test:database": "jest tests/database",
+    "test:ci": "jest --ci --coverage --maxWorkers=2"
+  },
+  "keywords": [
+    "integration",
+    "jest",
+    "testing",
+    "nexus"
+  ],
+  "author": "NEXUS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@types/jest": "^29.5.8",
+    "@types/node": "^20.10.0",
+    "@types/supertest": "^2.0.16",
+    "jest": "^29.7.0",
+    "ts-jest": "^29.1.1",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "axios": "^1.6.2",
+    "dotenv": "^16.3.1",
+    "jsonwebtoken": "^9.0.2",
+    "pg": "^8.11.3",
+    "redis": "^4.6.11",
+    "socket.io-client": "^4.5.4",
+    "supertest": "^6.3.3"
+  }
+}

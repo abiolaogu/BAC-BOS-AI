@@ -1,0 +1,45 @@
+{
+  "name": "nexus-e2e-tests",
+  "version": "1.0.0",
+  "description": "End-to-end tests for NEXUS Office Suite",
+  "private": true,
+  "scripts": {
+    "test": "playwright test",
+    "test:headed": "playwright test --headed",
+    "test:debug": "playwright test --debug",
+    "test:ui": "playwright test --ui",
+    "test:chrome": "playwright test --project=chromium",
+    "test:firefox": "playwright test --project=firefox",
+    "test:webkit": "playwright test --project=webkit",
+    "test:mobile": "playwright test --project=mobile-chrome --project=mobile-safari",
+    "test:smoke": "playwright test --grep @smoke",
+    "test:auth": "playwright test tests/auth.spec.ts",
+    "test:writer": "playwright test tests/writer.spec.ts",
+    "test:sheets": "playwright test tests/sheets.spec.ts",
+    "test:slides": "playwright test tests/slides.spec.ts",
+    "test:drive": "playwright test tests/drive.spec.ts",
+    "test:meet": "playwright test tests/meet.spec.ts",
+    "test:hub": "playwright test tests/hub.spec.ts",
+    "test:collaboration": "playwright test tests/collaboration.spec.ts",
+    "report": "playwright show-report",
+    "install:browsers": "playwright install --with-deps"
+  },
+  "keywords": [
+    "e2e",
+    "playwright",
+    "testing",
+    "nexus"
+  ],
+  "author": "NEXUS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "@playwright/test": "^1.40.1",
+    "@types/node": "^20.10.0",
+    "dotenv": "^16.3.1",
+    "typescript": "^5.3.2"
+  },
+  "dependencies": {
+    "faker": "^6.6.6",
+    "axios": "^1.6.2"
+  }
+}

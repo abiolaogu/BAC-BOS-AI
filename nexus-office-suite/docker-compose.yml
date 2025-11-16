@@ -115,6 +115,123 @@ services:
       - nexus-network
 
   # ============================================================================
+  # SHARED PLATFORM SERVICES
+  # ============================================================================
+
+  api-gateway:
+    build:
+      context: ./backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: nexus-api-gateway
+    environment:
+      - PORT=8000
+      - NODE_ENV=production
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=nexus_redis_password
+      - AUTH_SERVICE_URL=http://auth-service:3001
+      - WRITER_SERVICE_URL=http://writer-service:8091
+      - SHEETS_SERVICE_URL=http://sheets-service:8092
+      - SLIDES_SERVICE_URL=http://slides-service:8093
+      - DRIVE_SERVICE_URL=http://drive-service:8096
+      - MEET_SERVICE_URL=http://meet-service:8098
+      - NOTIFICATION_SERVICE_URL=http://notification-service:3007
+      - COLLABORATION_SERVICE_URL=http://collaboration-service:3008
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:5173
+    ports:
+      - "8000:8000"
+    networks:
+      - nexus-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  auth-service:
+    build:
+      context: ./backend/auth-service
+      dockerfile: Dockerfile
+    container_name: nexus-auth-service
+    environment:
+      - PORT=3001
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=nexus_auth
+      - DB_USER=nexus
+      - DB_PASSWORD=nexus_dev_password
+      - JWT_SECRET=${JWT_SECRET:-your-super-secret-jwt-key-change-this-in-production}
+      - JWT_EXPIRES_IN=1h
+      - JWT_REFRESH_SECRET=${JWT_REFRESH_SECRET:-your-super-secret-refresh-key}
+      - JWT_REFRESH_EXPIRES_IN=7d
+      - BCRYPT_ROUNDS=10
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM:-noreply@nexus.com}
+      - FRONTEND_URL=http://localhost:3000
+      - CORS_ORIGIN=http://localhost:3000,http://localhost:5173
+    ports:
+      - "3001:3001"
+    networks:
+      - nexus-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  notification-service:
+    build:
+      context: ./backend/notification-service
+      dockerfile: Dockerfile
+    container_name: nexus-notification-service
+    environment:
+      - PORT=3007
+      - NODE_ENV=production
+      - DB_HOST=postgres
+      - DB_PORT=5432
+      - DB_NAME=nexus_notifications
+      - DB_USER=nexus
+      - DB_PASSWORD=nexus_dev_password
+      - WS_CORS_ORIGIN=http://localhost:3000,http://localhost:5173
+      - SMTP_HOST=${SMTP_HOST:-smtp.gmail.com}
+      - SMTP_PORT=${SMTP_PORT:-587}
+      - SMTP_USER=${SMTP_USER}
+      - SMTP_PASSWORD=${SMTP_PASSWORD}
+      - EMAIL_FROM=${EMAIL_FROM:-notifications@nexus.com}
+      - FRONTEND_URL=http://localhost:3000
+      - INTERNAL_API_KEY=${INTERNAL_API_KEY:-generate-a-random-key}
+    ports:
+      - "3007:3007"
+    networks:
+      - nexus-network
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  collaboration-service:
+    build:
+      context: ./backend/collaboration-service
+      dockerfile: Dockerfile
+    container_name: nexus-collaboration-service
+    environment:
+      - PORT=3008
+      - NODE_ENV=production
+      - REDIS_HOST=redis
+      - REDIS_PORT=6379
+      - REDIS_PASSWORD=nexus_redis_password
+      - WS_CORS_ORIGIN=http://localhost:3000,http://localhost:5173
+      - SESSION_TIMEOUT_MS=300000
+      - PRESENCE_TIMEOUT_MS=60000
+    ports:
+      - "3008:3008"
+    networks:
+      - nexus-network
+    depends_on:
+      - redis
+    restart: unless-stopped
+
+  # ============================================================================
   # BACKEND MICROSERVICES
   # ============================================================================
 

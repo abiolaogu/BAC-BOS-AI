@@ -1,0 +1,130 @@
+syntax = "proto3";
+
+package nexus.writer;
+
+option go_package = "github.com/nexus/office-suite/shared/proto/writer";
+
+// Document Service
+service WriterService {
+  rpc CreateDocument(CreateDocumentRequest) returns (DocumentResponse);
+  rpc GetDocument(GetDocumentRequest) returns (DocumentResponse);
+  rpc UpdateDocument(UpdateDocumentRequest) returns (DocumentResponse);
+  rpc DeleteDocument(DeleteDocumentRequest) returns (DeleteDocumentResponse);
+  rpc ListDocuments(ListDocumentsRequest) returns (ListDocumentsResponse);
+  rpc ShareDocument(ShareDocumentRequest) returns (ShareDocumentResponse);
+  rpc ExportDocument(ExportDocumentRequest) returns (ExportDocumentResponse);
+}
+
+// Messages
+message Document {
+  string id = 1;
+  string tenant_id = 2;
+  string title = 3;
+  string content_json = 4;           // JSON-encoded content
+  string created_by = 5;
+  int64 created_at = 6;              // Unix timestamp
+  int64 updated_at = 7;
+  int32 version = 8;
+  string status = 9;                 // draft, published, archived
+  string folder_id = 10;
+  bool is_deleted = 11;
+  repeated Permission permissions = 12;
+}
+
+message Permission {
+  string user_id = 1;
+  string permission_type = 2;        // view, comment, edit, admin
+  int64 granted_at = 3;
+}
+
+message CreateDocumentRequest {
+  string tenant_id = 1;
+  string title = 2;
+  string content_json = 3;
+  string folder_id = 4;
+  string created_by = 5;
+}
+
+message GetDocumentRequest {
+  string document_id = 1;
+  string tenant_id = 2;
+  string user_id = 3;
+}
+
+message UpdateDocumentRequest {
+  string document_id = 1;
+  string tenant_id = 2;
+  string title = 3;
+  string content_json = 4;
+  string status = 5;
+  string user_id = 6;
+}
+
+message DeleteDocumentRequest {
+  string document_id = 1;
+  string tenant_id = 2;
+  bool permanent = 3;
+}
+
+message DeleteDocumentResponse {
+  bool success = 1;
+  string message = 2;
+}
+
+message ListDocumentsRequest {
+  string tenant_id = 1;
+  string user_id = 2;
+  string folder_id = 3;
+  string status = 4;
+  string search_query = 5;
+  int32 page = 6;
+  int32 limit = 7;
+  string sort_by = 8;
+  string sort_order = 9;
+}
+
+message ListDocumentsResponse {
+  repeated Document documents = 1;
+  Pagination pagination = 2;
+}
+
+message Pagination {
+  int32 page = 1;
+  int32 limit = 2;
+  int32 total = 3;
+  int32 total_pages = 4;
+  bool has_more = 5;
+}
+
+message ShareDocumentRequest {
+  string document_id = 1;
+  string tenant_id = 2;
+  repeated ShareRecipient recipients = 3;
+}
+
+message ShareRecipient {
+  string user_id = 1;
+  string email = 2;
+  string permission = 3;
+}
+
+message ShareDocumentResponse {
+  repeated Permission permissions = 1;
+  repeated string invited_emails = 2;
+}
+
+message ExportDocumentRequest {
+  string document_id = 1;
+  string tenant_id = 2;
+  string format = 3;                 // pdf, docx, html, txt, markdown
+}
+
+message ExportDocumentResponse {
+  bytes file_data = 1;
+  string content_type = 2;
+  string filename = 3;
+}
+
+message DocumentResponse {
+  Document document = 1;
+}

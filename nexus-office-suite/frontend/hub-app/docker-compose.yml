@@ -1,0 +1,37 @@
+version: '3.8'
+
+services:
+  nexus-hub:
+    build:
+      context: .
+      dockerfile: Dockerfile
+      args:
+        NEXT_PUBLIC_WRITER_API_URL: ${NEXT_PUBLIC_WRITER_API_URL:-http://localhost:8091/api}
+        NEXT_PUBLIC_SHEETS_API_URL: ${NEXT_PUBLIC_SHEETS_API_URL:-http://localhost:8092/api}
+        NEXT_PUBLIC_SLIDES_API_URL: ${NEXT_PUBLIC_SLIDES_API_URL:-http://localhost:8094/api}
+        NEXT_PUBLIC_DRIVE_API_URL: ${NEXT_PUBLIC_DRIVE_API_URL:-http://localhost:8093/api}
+        NEXT_PUBLIC_MEET_API_URL: ${NEXT_PUBLIC_MEET_API_URL:-http://localhost:8095/api}
+        NEXT_PUBLIC_AUTH_API_URL: ${NEXT_PUBLIC_AUTH_API_URL:-http://localhost:8080/api}
+    container_name: nexus-hub
+    ports:
+      - "3000:3000"
+    environment:
+      - NODE_ENV=production
+      - NEXT_PUBLIC_WRITER_API_URL=${NEXT_PUBLIC_WRITER_API_URL:-http://localhost:8091/api}
+      - NEXT_PUBLIC_SHEETS_API_URL=${NEXT_PUBLIC_SHEETS_API_URL:-http://localhost:8092/api}
+      - NEXT_PUBLIC_SLIDES_API_URL=${NEXT_PUBLIC_SLIDES_API_URL:-http://localhost:8094/api}
+      - NEXT_PUBLIC_DRIVE_API_URL=${NEXT_PUBLIC_DRIVE_API_URL:-http://localhost:8093/api}
+      - NEXT_PUBLIC_MEET_API_URL=${NEXT_PUBLIC_MEET_API_URL:-http://localhost:8095/api}
+      - NEXT_PUBLIC_AUTH_API_URL=${NEXT_PUBLIC_AUTH_API_URL:-http://localhost:8080/api}
+      - NEXT_PUBLIC_WRITER_APP_URL=${NEXT_PUBLIC_WRITER_APP_URL:-http://localhost:3001}
+      - NEXT_PUBLIC_SHEETS_APP_URL=${NEXT_PUBLIC_SHEETS_APP_URL:-http://localhost:3002}
+      - NEXT_PUBLIC_SLIDES_APP_URL=${NEXT_PUBLIC_SLIDES_APP_URL:-http://localhost:3004}
+      - NEXT_PUBLIC_DRIVE_APP_URL=${NEXT_PUBLIC_DRIVE_APP_URL:-http://localhost:3003}
+      - NEXT_PUBLIC_MEET_APP_URL=${NEXT_PUBLIC_MEET_APP_URL:-http://localhost:3005}
+    restart: unless-stopped
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    driver: bridge
