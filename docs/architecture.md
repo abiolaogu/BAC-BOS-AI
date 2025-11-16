@@ -38,6 +38,8 @@ NEXUS is a cloud-native, microservices-based Business Operating System that enab
 ## System Overview
 
 \`\`\`mermaid
+<img width="641" height="338" alt="image" src="https://github.com/user-attachments/assets/78bc7824-dcfd-4b53-bbea-8708984d8c64" />
+
 graph TB
     subgraph "Client Layer"
         WEB[Web Console]
