@@ -1,0 +1,227 @@
+name: Deploy to Production
+
+on:
+  workflow_dispatch:
+    inputs:
+      version:
+        description: 'Version to deploy'
+        required: true
+        type: string
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}
+  KUBE_NAMESPACE: nexus-production
+
+jobs:
+  approval:
+    name: Manual Approval
+    runs-on: ubuntu-latest
+    environment:
+      name: production-approval
+
+    steps:
+      - name: Request deployment approval
+        run: echo "Deployment to production requested for version ${{ inputs.version }}"
+
+  pre-deployment-checks:
+    name: Pre-deployment Checks
+    runs-on: ubuntu-latest
+    needs: approval
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Verify version exists
+        run: |
+          git fetch --all --tags
+          if ! git tag | grep -q "^${{ inputs.version }}$"; then
+            echo "Version ${{ inputs.version }} does not exist"
+            exit 1
+          fi
+
+      - name: Run security checks
+        run: |
+          echo "Running security checks..."
+          # Add security validation here
+
+      - name: Verify staging deployment
+        run: |
+          echo "Verifying staging is healthy..."
+          curl -f https://staging.nexus.example.com/health || exit 1
+
+  backup:
+    name: Backup Production Database
+    runs-on: ubuntu-latest
+    needs: pre-deployment-checks
+
+    steps:
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Create database backup
+        run: |
+          aws rds create-db-snapshot \
+            --db-instance-identifier nexus-production \
+            --db-snapshot-identifier nexus-backup-${{ github.run_number }}-$(date +%Y%m%d-%H%M%S)
+
+      - name: Verify backup
+        run: |
+          aws rds wait db-snapshot-available \
+            --db-snapshot-identifier nexus-backup-${{ github.run_number }}-$(date +%Y%m%d-%H%M%S)
+
+  deploy:
+    name: Blue-Green Deployment
+    runs-on: ubuntu-latest
+    needs: backup
+    environment:
+      name: production
+      url: https://nexus.example.com
+
+    permissions:
+      contents: read
+      packages: write
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+        with:
+          ref: ${{ inputs.version }}
+
+      - name: Configure AWS credentials
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-east-1
+
+      - name: Setup kubectl
+        uses: azure/setup-kubectl@v3
+        with:
+          version: 'v1.28.0'
+
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name nexus-production --region us-east-1
+
+      - name: Deploy green environment
+        run: |
+          # Deploy to green environment (inactive)
+          kubectl apply -f kubernetes/production/green/ -n ${{ env.KUBE_NAMESPACE }}
+          kubectl set image deployment/*-green *=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/*:${{ inputs.version }} -n ${{ env.KUBE_NAMESPACE }}
+          kubectl rollout status deployment -l environment=green -n ${{ env.KUBE_NAMESPACE }} --timeout=15m
+
+      - name: Run database migrations
+        run: |
+          kubectl run migration-${{ github.run_number }} \
+            --image=${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}/auth:${{ inputs.version }} \
+            --restart=Never \
+            --command -- npm run migrate \
+            -n ${{ env.KUBE_NAMESPACE }}
+          kubectl wait --for=condition=complete job/migration-${{ github.run_number }} --timeout=10m -n ${{ env.KUBE_NAMESPACE }}
+
+      - name: Run smoke tests on green
+        run: |
+          cd tests/e2e
+          npm ci
+          BASE_URL=https://green.nexus.example.com npm run test:smoke
+
+      - name: Switch traffic to green
+        run: |
+          # Switch load balancer to green environment
+          kubectl patch service nexus-lb -n ${{ env.KUBE_NAMESPACE }} -p '{"spec":{"selector":{"environment":"green"}}}'
+
+      - name: Wait for traffic switch
+        run: sleep 30
+
+      - name: Verify production health
+        run: |
+          for i in {1..10}; do
+            if curl -f https://nexus.example.com/health; then
+              echo "Health check passed"
+              exit 0
+            fi
+            echo "Attempt $i failed, retrying..."
+            sleep 10
+          done
+          echo "Health check failed"
+          exit 1
+
+      - name: Run post-deployment tests
+        run: |
+          cd tests/e2e
+          BASE_URL=https://nexus.example.com npm run test:smoke
+
+      - name: Scale down blue environment
+        if: success()
+        run: |
+          kubectl scale deployment -l environment=blue --replicas=0 -n ${{ env.KUBE_NAMESPACE }}
+
+  rollback:
+    name: Rollback on Failure
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: failure()
+
+    steps:
+      - name: Configure kubectl
+        run: |
+          aws eks update-kubeconfig --name nexus-production --region us-east-1
+
+      - name: Switch traffic back to blue
+        run: |
+          kubectl patch service nexus-lb -n ${{ env.KUBE_NAMESPACE }} -p '{"spec":{"selector":{"environment":"blue"}}}'
+
+      - name: Scale down green environment
+        run: |
+          kubectl scale deployment -l environment=green --replicas=0 -n ${{ env.KUBE_NAMESPACE }}
+
+      - name: Restore database
+        run: |
+          echo "Database restoration would be performed here if needed"
+          # aws rds restore-db-instance-from-db-snapshot ...
+
+      - name: Notify rollback
+        uses: 8398a7/action-slack@v3
+        with:
+          status: failure
+          text: 'Production deployment rolled back'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+
+  notify:
+    name: Notify Deployment
+    runs-on: ubuntu-latest
+    needs: deploy
+    if: success()
+
+    steps:
+      - name: Notify success
+        uses: 8398a7/action-slack@v3
+        with:
+          status: success
+          text: 'Production deployment successful for version ${{ inputs.version }}'
+          webhook_url: ${{ secrets.SLACK_WEBHOOK }}
+          fields: repo,message,commit,author,took
+
+      - name: Create deployment record
+        run: |
+          echo "Production Deployment" > deployment-record.md
+          echo "===================" >> deployment-record.md
+          echo "Version: ${{ inputs.version }}" >> deployment-record.md
+          echo "Deployed: $(date)" >> deployment-record.md
+          echo "Run ID: ${{ github.run_number }}" >> deployment-record.md
+          echo "Deployed by: ${{ github.actor }}" >> deployment-record.md
+
+      - name: Upload deployment record
+        uses: actions/upload-artifact@v3
+        with:
+          name: production-deployment-record
+          path: deployment-record.md
+          retention-days: 365

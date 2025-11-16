@@ -94,6 +94,10 @@ NEXUS Office Suite is a complete productivity platform that provides:
 ```
 nexus-office-suite/
 ├── backend/                    # Backend microservices
+│   ├── api-gateway/           # API Gateway & routing (Port 8000)
+│   ├── auth-service/          # Authentication & SSO (Port 3001)
+│   ├── notification-service/  # Real-time notifications (Port 3007)
+│   ├── collaboration-service/ # Collaboration & OT (Port 3008)
 │   ├── writer-service/        # Document management (Port 8091)
 │   ├── sheets-service/        # Spreadsheet engine (Port 8092)
 │   ├── slides-service/        # Presentation service (Port 8093)

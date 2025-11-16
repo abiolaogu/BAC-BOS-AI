@@ -1,0 +1,73 @@
+# Snyk Configuration
+# For dependency vulnerability scanning and license compliance
+
+# Language settings
+language-settings:
+  javascript:
+    npm-install: true
+    yarn-install: false
+
+# Severity threshold
+severity-threshold: high
+
+# Test options
+test:
+  # Fail on issues
+  fail-on: upgradable
+
+  # Show vulnerable paths
+  show-vulnerable-paths: all
+
+  # Project lifecycle
+  project-lifecycle: production
+
+  # Exclude development dependencies
+  dev: false
+
+# Monitor settings
+monitor:
+  # Organization
+  org: nexus-team
+
+  # Project tags
+  tags:
+    - production
+    - office-suite
+    - critical
+
+# Ignore policies
+ignore:
+  # File paths to ignore
+  paths:
+    - 'test/**'
+    - '**/*.test.js'
+    - '**/*.spec.js'
+    - 'node_modules/**'
+
+  # Specific vulnerabilities to ignore (with expiration)
+  vulnerabilities: []
+
+# License compliance
+license-policy:
+  # Allowed licenses
+  allowed:
+    - MIT
+    - Apache-2.0
+    - BSD-3-Clause
+    - BSD-2-Clause
+    - ISC
+
+  # Disallowed licenses
+  disallowed:
+    - GPL-3.0
+    - AGPL-3.0
+
+# Reporting
+report:
+  format: json
+  output: snyk-report.json
+
+# Integration
+integrate:
+  github: true
+  slack: true

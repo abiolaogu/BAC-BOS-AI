@@ -1,0 +1,68 @@
+# Trivy Security Scanner Configuration
+# Scans Docker containers for vulnerabilities
+
+# Severity levels to report
+severity:
+  - CRITICAL
+  - HIGH
+  - MEDIUM
+
+# Vulnerability types to detect
+vuln-type:
+  - os
+  - library
+
+# Scan targets
+scan:
+  # Security checks to perform
+  security-checks:
+    - vuln      # Vulnerabilities
+    - config    # Misconfigurations
+    - secret    # Secrets
+
+  # File patterns to scan
+  file-patterns:
+    - '*.yaml'
+    - '*.yml'
+    - '*.json'
+    - 'Dockerfile'
+    - '*.js'
+    - '*.ts'
+
+# Ignore unfixed vulnerabilities
+ignore-unfixed: false
+
+# Timeout for scanning
+timeout: 10m
+
+# Cache settings
+cache:
+  backend: fs
+  ttl: 24h
+
+# Output format
+format: json
+
+# Exit code on vulnerabilities found
+exit-code: 1
+
+# Vulnerability database
+db:
+  repository: ghcr.io/aquasecurity/trivy-db
+  skip-update: false
+
+# Ignore specific vulnerabilities (use with caution)
+ignorefile: .trivyignore
+
+# Report formatting
+report:
+  format: table
+  template: null
+  dependency-tree: false
+
+# Kubernetes manifest scanning
+kubernetes:
+  components:
+    - workload
+    - rbac
+    - network

@@ -1,0 +1,91 @@
+# Kong Declarative Configuration (Optional)
+# This file can be used if you prefer Kong as the API Gateway
+# instead of the custom Node.js implementation
+
+_format_version: "3.0"
+_transform: true
+
+services:
+  - name: auth-service
+    url: http://auth-service:3001
+    routes:
+      - name: auth-route
+        paths:
+          - /api/auth
+        strip_path: true
+
+  - name: writer-service
+    url: http://writer-service:3002
+    routes:
+      - name: writer-route
+        paths:
+          - /api/writer
+        strip_path: true
+
+  - name: sheets-service
+    url: http://sheets-service:3003
+    routes:
+      - name: sheets-route
+        paths:
+          - /api/sheets
+        strip_path: true
+
+  - name: slides-service
+    url: http://slides-service:3004
+    routes:
+      - name: slides-route
+        paths:
+          - /api/slides
+        strip_path: true
+
+  - name: drive-service
+    url: http://drive-service:3005
+    routes:
+      - name: drive-route
+        paths:
+          - /api/drive
+        strip_path: true
+
+  - name: meet-service
+    url: http://meet-service:3006
+    routes:
+      - name: meet-route
+        paths:
+          - /api/meet
+        strip_path: true
+
+  - name: notification-service
+    url: http://notification-service:3007
+    routes:
+      - name: notification-route
+        paths:
+          - /api/notifications
+        strip_path: true
+
+  - name: collaboration-service
+    url: http://collaboration-service:3008
+    routes:
+      - name: collaboration-route
+        paths:
+          - /api/collaboration
+        strip_path: true
+
+plugins:
+  - name: rate-limiting
+    config:
+      minute: 100
+      policy: local
+
+  - name: cors
+    config:
+      origins:
+        - http://localhost:3000
+        - http://localhost:5173
+      credentials: true
+      max_age: 3600
+
+  - name: request-transformer
+    config:
+      add:
+        headers:
+          - X-Gateway-Version:1.0

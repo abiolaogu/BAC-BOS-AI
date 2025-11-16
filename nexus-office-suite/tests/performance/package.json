@@ -1,0 +1,27 @@
+{
+  "name": "nexus-performance-tests",
+  "version": "1.0.0",
+  "description": "Performance tests for NEXUS Office Suite using k6",
+  "private": true,
+  "scripts": {
+    "test": "k6 run scenarios/api-stress.js",
+    "test:auth": "k6 run scenarios/auth-load.js",
+    "test:api": "k6 run scenarios/api-stress.js",
+    "test:websocket": "k6 run scenarios/websocket-concurrent.js",
+    "test:upload": "k6 run scenarios/file-upload.js",
+    "test:all": "npm run test:auth && npm run test:api && npm run test:websocket && npm run test:upload",
+    "report": "k6 cloud scenarios/api-stress.js"
+  },
+  "keywords": [
+    "k6",
+    "performance",
+    "load-testing",
+    "stress-testing",
+    "nexus"
+  ],
+  "author": "NEXUS Team",
+  "license": "MIT",
+  "devDependencies": {
+    "k6": "^0.47.0"
+  }
+}
