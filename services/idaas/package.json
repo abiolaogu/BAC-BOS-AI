@@ -36,6 +36,7 @@
     "jsonwebtoken": "^9.0.2",
     "speakeasy": "^2.0.0",
     "qrcode": "^1.5.3",
+    "axios": "^1.6.2",
     "passport": "^0.7.0",
     "passport-local": "^1.0.0",
     "passport-saml": "^3.2.4",

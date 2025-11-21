@@ -9,6 +9,8 @@ import { asyncHandler } from '../middleware/error.middleware';
 // Import controllers
 import * as authController from '../controllers/auth.controller';
 import * as userController from '../controllers/user.controller';
+import * as oauthController from '../controllers/oauth.controller';
+import * as organizationController from '../controllers/organization.controller';
 
 const router = Router();
 
@@ -73,11 +75,67 @@ router.get('/users/:id/sessions', authenticate, asyncHandler(userController.getU
 router.delete('/users/:id/sessions/:sessionId', authenticate, asyncHandler(userController.revokeSession));
 router.delete('/users/:id/sessions', authenticate, asyncHandler(userController.revokeAllSessions));
 
-// ==================== Organization Routes (placeholder) ====================
+// ==================== OAuth Routes ====================
 
-// TODO: Implement organization routes
-router.get('/organizations', authenticate, (req, res) => {
-  res.json({ success: true, data: [], message: 'Coming soon' });
+// Initiate OAuth flow
+router.get('/oauth/:provider', asyncHandler(oauthController.initiateOAuth));
+
+// OAuth callback
+router.get('/oauth/:provider/callback', asyncHandler(oauthController.handleOAuthCallback));
+
+// Get user's OAuth connections
+router.get('/oauth/connections', authenticate, asyncHandler(oauthController.getConnections));
+
+// Disconnect OAuth provider
+router.delete('/oauth/:provider', authenticate, asyncHandler(oauthController.disconnectOAuth));
+
+// ==================== Organization Routes ====================
+
+// List organizations
+router.get('/organizations', authenticate, asyncHandler(organizationController.listOrganizations));
+
+// Create organization
+router.post('/organizations', authenticate, asyncHandler(organizationController.createOrganization));
+
+// Get organization
+router.get('/organizations/:id', authenticate, asyncHandler(organizationController.getOrganization));
+
+// Update organization
+router.put('/organizations/:id', authenticate, asyncHandler(organizationController.updateOrganization));
+
+// Delete organization
+router.delete('/organizations/:id', authenticate, asyncHandler(organizationController.deleteOrganization));
+
+// Organization members
+router.get('/organizations/:id/members', authenticate, asyncHandler(organizationController.getMembers));
+router.post('/organizations/:id/members', authenticate, asyncHandler(organizationController.addMember));
+router.delete('/organizations/:id/members/:userId', authenticate, asyncHandler(organizationController.removeMember));
+router.patch('/organizations/:id/members/:userId', authenticate, asyncHandler(organizationController.updateMemberRole));
+
+// Organization stats
+router.get('/organizations/:id/stats', authenticate, asyncHandler(organizationController.getOrganizationStats));
+
+// ==================== Roles & Permissions (Authorization) ====================
+
+// Roles will be managed through a separate controller (to be added)
+// For now, these are placeholders
+router.get('/roles', authenticate, (req, res) => {
+  res.json({ success: true, data: [], message: 'Roles management - coming soon' });
+});
+
+router.post('/roles', authenticate, (req, res) => {
+  res.json({ success: true, message: 'Roles management - coming soon' });
+});
+
+// ==================== Webhooks ====================
+
+// Webhook management will be added through a separate controller (to be added)
+router.get('/webhooks', authenticate, (req, res) => {
+  res.json({ success: true, data: [], message: 'Webhooks - coming soon' });
+});
+
+router.post('/webhooks', authenticate, (req, res) => {
+  res.json({ success: true, message: 'Webhooks - coming soon' });
 });
 
 // ==================== Groups Routes (placeholder) ====================
