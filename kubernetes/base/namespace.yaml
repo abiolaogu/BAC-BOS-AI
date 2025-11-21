@@ -1,0 +1,88 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-core
+  labels:
+    name: nexus-core
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-office
+  labels:
+    name: nexus-office
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-communications
+  labels:
+    name: nexus-communications
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-business
+  labels:
+    name: nexus-business
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-devops
+  labels:
+    name: nexus-devops
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-ai
+  labels:
+    name: nexus-ai
+    istio-injection: enabled
+    monitoring: enabled
+    gpu: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-data
+  labels:
+    name: nexus-data
+    istio-injection: enabled
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-monitoring
+  labels:
+    name: nexus-monitoring
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-security
+  labels:
+    name: nexus-security
+    monitoring: enabled
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-storage
+  labels:
+    name: nexus-storage
+    monitoring: enabled

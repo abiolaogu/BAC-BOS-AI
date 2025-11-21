@@ -1,0 +1,1010 @@
+version: '3.9'
+
+# NEXUS Platform - Complete Docker Compose Configuration
+# 50+ Integrated Applications and Services
+# Production-Ready Multi-Tenant Business Operating System
+
+x-common-env: &common-env
+  NODE_ENV: production
+  LOG_LEVEL: info
+  TRACE_ENABLED: "true"
+  METRICS_ENABLED: "true"
+
+x-database-env: &database-env
+  POSTGRES_HOST: postgres
+  POSTGRES_PORT: 5432
+  POSTGRES_DB: nexus
+  POSTGRES_USER: nexus
+  POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeInProduction}
+  REDIS_HOST: redis
+  REDIS_PORT: 6379
+  MONGODB_HOST: mongodb
+  MONGODB_PORT: 27017
+
+services:
+  # ============================================================================
+  # INFRASTRUCTURE SERVICES
+  # ============================================================================
+
+  # PostgreSQL - Primary Database
+  postgres:
+    image: postgres:16-alpine
+    container_name: nexus-postgres
+    environment:
+      POSTGRES_DB: nexus
+      POSTGRES_USER: nexus
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-ChangeMeInProduction}
+      POSTGRES_MULTIPLE_DATABASES: writer,sheets,slides,drive,mail,crm,erp,ecommerce,hr,idaas,dbaas
+    volumes:
+      - postgres-data:/var/lib/postgresql/data
+      - ./scripts/init-databases.sh:/docker-entrypoint-initdb.d/init-databases.sh
+    ports:
+      - "5432:5432"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U nexus"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Redis - Cache & Session Store
+  redis:
+    image: redis:7-alpine
+    container_name: nexus-redis
+    command: redis-server --appendonly yes --requirepass ${REDIS_PASSWORD:-ChangeMeInProduction}
+    volumes:
+      - redis-data:/data
+    ports:
+      - "6379:6379"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 3s
+      retries: 5
+
+  # MongoDB - Document Store
+  mongodb:
+    image: mongo:7
+    container_name: nexus-mongodb
+    environment:
+      MONGO_INITDB_ROOT_USERNAME: nexus
+      MONGO_INITDB_ROOT_PASSWORD: ${MONGO_PASSWORD:-ChangeMeInProduction}
+    volumes:
+      - mongodb-data:/data/db
+    ports:
+      - "27017:27017"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: echo 'db.runCommand("ping").ok' | mongosh localhost:27017/test --quiet
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # MinIO - Object Storage
+  minio:
+    image: minio/minio:latest
+    container_name: nexus-minio
+    command: server /data --console-address ":9001"
+    environment:
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-nexusadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-ChangeMeInProduction}
+    volumes:
+      - minio-data:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:9000/minio/health/live"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # Kafka - Event Streaming
+  kafka:
+    image: confluentinc/cp-kafka:7.5.0
+    container_name: nexus-kafka
+    depends_on:
+      - zookeeper
+    environment:
+      KAFKA_BROKER_ID: 1
+      KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+      KAFKA_ADVERTISED_LISTENERS: PLAINTEXT://kafka:9092,PLAINTEXT_HOST://localhost:29092
+      KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: PLAINTEXT:PLAINTEXT,PLAINTEXT_HOST:PLAINTEXT
+      KAFKA_INTER_BROKER_LISTENER_NAME: PLAINTEXT
+      KAFKA_OFFSETS_TOPIC_REPLICATION_FACTOR: 1
+      KAFKA_AUTO_CREATE_TOPICS_ENABLE: "true"
+    ports:
+      - "29092:29092"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "kafka-broker-api-versions", "--bootstrap-server=localhost:9092"]
+      interval: 10s
+      timeout: 10s
+      retries: 5
+
+  zookeeper:
+    image: confluentinc/cp-zookeeper:7.5.0
+    container_name: nexus-zookeeper
+    environment:
+      ZOOKEEPER_CLIENT_PORT: 2181
+      ZOOKEEPER_TICK_TIME: 2000
+    networks:
+      - nexus-network
+
+  # Elasticsearch - Search Engine
+  elasticsearch:
+    image: docker.elastic.co/elasticsearch/elasticsearch:8.11.0
+    container_name: nexus-elasticsearch
+    environment:
+      - discovery.type=single-node
+      - "ES_JAVA_OPTS=-Xms512m -Xmx512m"
+      - xpack.security.enabled=false
+    volumes:
+      - elasticsearch-data:/usr/share/elasticsearch/data
+    ports:
+      - "9200:9200"
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:9200/_cluster/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  # ============================================================================
+  # CORE PLATFORM SERVICES
+  # ============================================================================
+
+  # API Gateway
+  api-gateway:
+    build:
+      context: ./nexus-office-suite/backend/api-gateway
+      dockerfile: Dockerfile
+    container_name: nexus-api-gateway
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8000
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      CORS_ORIGIN: ${CORS_ORIGIN:-http://localhost:3000}
+    ports:
+      - "8000:8000"
+    depends_on:
+      - redis
+      - postgres
+    networks:
+      - nexus-network
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+
+  # Authentication Service (Enhanced IDaaS Integration)
+  auth-service:
+    build:
+      context: ./nexus-office-suite/backend/auth-service
+      dockerfile: Dockerfile
+    container_name: nexus-auth-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 3001
+      JWT_SECRET: ${JWT_SECRET:-change-this-secret-in-production}
+      JWT_EXPIRES_IN: 15m
+      REFRESH_TOKEN_EXPIRES_IN: 7d
+      MFA_ENABLED: "true"
+      OAUTH_GOOGLE_CLIENT_ID: ${OAUTH_GOOGLE_CLIENT_ID}
+      OAUTH_GOOGLE_CLIENT_SECRET: ${OAUTH_GOOGLE_CLIENT_SECRET}
+      OAUTH_MICROSOFT_CLIENT_ID: ${OAUTH_MICROSOFT_CLIENT_ID}
+      OAUTH_MICROSOFT_CLIENT_SECRET: ${OAUTH_MICROSOFT_CLIENT_SECRET}
+    ports:
+      - "3001:3001"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  # IDaaS - Identity as a Service
+  idaas-service:
+    build:
+      context: ./services/idaas
+      dockerfile: Dockerfile
+    container_name: nexus-idaas
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8100
+      SAML_ENABLED: "true"
+      LDAP_ENABLED: "true"
+      ACTIVE_DIRECTORY_ENABLED: "true"
+    ports:
+      - "8100:8100"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  # Notification Service
+  notification-service:
+    build:
+      context: ./nexus-office-suite/backend/notification-service
+      dockerfile: Dockerfile
+    container_name: nexus-notification-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 3007
+      SMTP_HOST: ${SMTP_HOST:-smtp.gmail.com}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER}
+      SMTP_PASSWORD: ${SMTP_PASSWORD}
+      WEBSOCKET_ENABLED: "true"
+    ports:
+      - "3007:3007"
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+
+  # Collaboration Service
+  collaboration-service:
+    build:
+      context: ./nexus-office-suite/backend/collaboration-service
+      dockerfile: Dockerfile
+    container_name: nexus-collaboration-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 3008
+      OPERATIONAL_TRANSFORM_ENABLED: "true"
+    ports:
+      - "3008:3008"
+    depends_on:
+      - redis
+      - kafka
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # OFFICE SUITE SERVICES
+  # ============================================================================
+
+  # NEXUS Writer
+  writer-service:
+    build:
+      context: ./nexus-office-suite/backend/writer-service
+      dockerfile: Dockerfile
+    container_name: nexus-writer-service
+    environment:
+      <<: *common-env
+      PORT: 8091
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-ChangeMeInProduction}@postgres:5432/writer
+      REDIS_URL: redis://redis:6379
+    ports:
+      - "8091:8091"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  writer-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/writer-app
+      dockerfile: Dockerfile
+    container_name: nexus-writer-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8091
+      NEXT_PUBLIC_WS_URL: ws://localhost:3008
+    ports:
+      - "3001:3000"
+    networks:
+      - nexus-network
+
+  # NEXUS Sheets
+  sheets-service:
+    build:
+      context: ./nexus-office-suite/backend/sheets-service
+      dockerfile: Dockerfile
+    container_name: nexus-sheets-service
+    environment:
+      <<: *common-env
+      PORT: 8092
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-ChangeMeInProduction}@postgres:5432/sheets
+    ports:
+      - "8092:8092"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  sheets-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/sheets-app
+      dockerfile: Dockerfile
+    container_name: nexus-sheets-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8092
+    ports:
+      - "3002:3000"
+    networks:
+      - nexus-network
+
+  # NEXUS Slides
+  slides-service:
+    build:
+      context: ./nexus-office-suite/backend/slides-service
+      dockerfile: Dockerfile
+    container_name: nexus-slides-service
+    environment:
+      <<: *common-env
+      PORT: 8094
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-ChangeMeInProduction}@postgres:5432/slides
+    ports:
+      - "8094:8094"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  slides-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/slides-app
+      dockerfile: Dockerfile
+    container_name: nexus-slides-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8094
+    ports:
+      - "3003:3000"
+    networks:
+      - nexus-network
+
+  # NEXUS Drive
+  drive-service:
+    build:
+      context: ./nexus-office-suite/backend/drive-service
+      dockerfile: Dockerfile
+    container_name: nexus-drive-service
+    environment:
+      <<: *common-env
+      PORT: 8093
+      DATABASE_URL: postgresql://nexus:${POSTGRES_PASSWORD:-ChangeMeInProduction}@postgres:5432/drive
+      MINIO_ENDPOINT: minio:9000
+      MINIO_ACCESS_KEY: ${MINIO_ROOT_USER:-nexusadmin}
+      MINIO_SECRET_KEY: ${MINIO_ROOT_PASSWORD:-ChangeMeInProduction}
+    ports:
+      - "8093:8093"
+    depends_on:
+      - postgres
+      - minio
+    networks:
+      - nexus-network
+
+  drive-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/drive-app
+      dockerfile: Dockerfile
+    container_name: nexus-drive-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8093
+    ports:
+      - "3004:3000"
+    networks:
+      - nexus-network
+
+  # NEXUS Meet
+  meet-service:
+    build:
+      context: ./nexus-office-suite/backend/meet-service
+      dockerfile: Dockerfile
+    container_name: nexus-meet-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8095
+      MEDIASOUP_LISTEN_IP: 0.0.0.0
+      MEDIASOUP_ANNOUNCED_IP: ${PUBLIC_IP:-127.0.0.1}
+      RTC_MIN_PORT: 40000
+      RTC_MAX_PORT: 40100
+    ports:
+      - "8095:8095"
+      - "40000-40100:40000-40100/udp"
+      - "40000-40100:40000-40100/tcp"
+    depends_on:
+      - postgres
+      - redis
+    networks:
+      - nexus-network
+
+  meet-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/meet-app
+      dockerfile: Dockerfile
+    container_name: nexus-meet-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8095
+    ports:
+      - "3005:3000"
+    networks:
+      - nexus-network
+
+  # NEXUS Hub
+  hub-frontend:
+    build:
+      context: ./nexus-office-suite/frontend/hub-app
+      dockerfile: Dockerfile
+    container_name: nexus-hub-frontend
+    environment:
+      NEXT_PUBLIC_GATEWAY_URL: http://localhost:8000
+    ports:
+      - "3000:3000"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # COMMUNICATIONS SERVICES (VAS Platform)
+  # ============================================================================
+
+  # VAS - SMS Gateway
+  vas-sms-service:
+    build:
+      context: ./services/vas/sms
+      dockerfile: Dockerfile
+    container_name: nexus-vas-sms
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8200
+      TWILIO_ACCOUNT_SID: ${TWILIO_ACCOUNT_SID}
+      TWILIO_AUTH_TOKEN: ${TWILIO_AUTH_TOKEN}
+      INFOBIP_API_KEY: ${INFOBIP_API_KEY}
+      AFRICA_TALKING_API_KEY: ${AFRICA_TALKING_API_KEY}
+    ports:
+      - "8200:8200"
+    networks:
+      - nexus-network
+
+  # VAS - WhatsApp Business
+  vas-whatsapp-service:
+    build:
+      context: ./services/vas/whatsapp
+      dockerfile: Dockerfile
+    container_name: nexus-vas-whatsapp
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8201
+      WHATSAPP_BUSINESS_API_KEY: ${WHATSAPP_BUSINESS_API_KEY}
+      WHATSAPP_PHONE_NUMBER_ID: ${WHATSAPP_PHONE_NUMBER_ID}
+    ports:
+      - "8201:8201"
+    networks:
+      - nexus-network
+
+  # VAS - Telegram
+  vas-telegram-service:
+    build:
+      context: ./services/vas/telegram
+      dockerfile: Dockerfile
+    container_name: nexus-vas-telegram
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8202
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN}
+    ports:
+      - "8202:8202"
+    networks:
+      - nexus-network
+
+  # VAS - Facebook Messenger
+  vas-messenger-service:
+    build:
+      context: ./services/vas/messenger
+      dockerfile: Dockerfile
+    container_name: nexus-vas-messenger
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8203
+      FACEBOOK_PAGE_ACCESS_TOKEN: ${FACEBOOK_PAGE_ACCESS_TOKEN}
+      FACEBOOK_VERIFY_TOKEN: ${FACEBOOK_VERIFY_TOKEN}
+    ports:
+      - "8203:8203"
+    networks:
+      - nexus-network
+
+  # Voice Switch - UCaaS/CPaaS Platform
+  voice-switch-service:
+    build:
+      context: ./services/voice-switch
+      dockerfile: Dockerfile
+    container_name: nexus-voice-switch
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8210
+      SIP_PORT: 5060
+      RTP_PORT_RANGE: 10000-20000
+      WEBRTC_ENABLED: "true"
+    ports:
+      - "8210:8210"
+      - "5060:5060/udp"
+      - "5060:5060/tcp"
+      - "10000-20000:10000-20000/udp"
+    networks:
+      - nexus-network
+
+  # Email Service
+  email-service:
+    build:
+      context: ./services/email
+      dockerfile: Dockerfile
+    container_name: nexus-email-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8220
+      SMTP_PORT: 25
+      IMAP_PORT: 143
+      POP3_PORT: 110
+      SMTP_TLS_PORT: 587
+      IMAP_TLS_PORT: 993
+      POP3_TLS_PORT: 995
+    ports:
+      - "8220:8220"
+      - "25:25"
+      - "143:143"
+      - "110:110"
+      - "587:587"
+      - "993:993"
+      - "995:995"
+    volumes:
+      - email-data:/var/mail
+    networks:
+      - nexus-network
+
+  # Contact Center Platform
+  contact-center-service:
+    build:
+      context: ./services/contact-center
+      dockerfile: Dockerfile
+    container_name: nexus-contact-center
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8230
+      QUEUE_ENABLED: "true"
+      IVR_ENABLED: "true"
+      RECORDING_ENABLED: "true"
+      ANALYTICS_ENABLED: "true"
+      AI_AGENT_ENABLED: "true"
+    ports:
+      - "8230:8230"
+    depends_on:
+      - postgres
+      - redis
+      - voice-switch-service
+    networks:
+      - nexus-network
+
+  contact-center-frontend:
+    build:
+      context: ./services/contact-center/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-contact-center-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8230
+    ports:
+      - "3020:3000"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # BUSINESS SERVICES
+  # ============================================================================
+
+  # CRM Service
+  crm-service:
+    build:
+      context: ./services/crm
+      dockerfile: Dockerfile
+    container_name: nexus-crm-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8300
+    ports:
+      - "8300:8300"
+    networks:
+      - nexus-network
+
+  # eCommerce Service
+  ecommerce-service:
+    build:
+      context: ./services/ecommerce
+      dockerfile: Dockerfile
+    container_name: nexus-ecommerce-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8310
+      PAYMENT_GATEWAYS: stripe,paystack,flutterwave
+      STRIPE_SECRET_KEY: ${STRIPE_SECRET_KEY}
+      PAYSTACK_SECRET_KEY: ${PAYSTACK_SECRET_KEY}
+      FLUTTERWAVE_SECRET_KEY: ${FLUTTERWAVE_SECRET_KEY}
+    ports:
+      - "8310:8310"
+    networks:
+      - nexus-network
+
+  ecommerce-frontend:
+    build:
+      context: ./services/ecommerce/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-ecommerce-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8310
+    ports:
+      - "3030:3000"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # DEVELOPER & DEVOPS SERVICES
+  # ============================================================================
+
+  # DevSecOps Platform (AAISD)
+  devops-service:
+    build:
+      context: ./services/devops
+      dockerfile: Dockerfile
+    container_name: nexus-devops-service
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8400
+      CI_CD_ENABLED: "true"
+      SECURITY_SCANNING_ENABLED: "true"
+    ports:
+      - "8400:8400"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nexus-network
+
+  devops-frontend:
+    build:
+      context: ./services/devops/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-devops-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8400
+    ports:
+      - "3040:3000"
+    networks:
+      - nexus-network
+
+  # API Manager (Codex)
+  api-manager-service:
+    build:
+      context: ./services/api-manager
+      dockerfile: Dockerfile
+    container_name: nexus-api-manager
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8410
+      RATE_LIMITING_ENABLED: "true"
+      ANALYTICS_ENABLED: "true"
+    ports:
+      - "8410:8410"
+    networks:
+      - nexus-network
+
+  # DBaaS - Database as a Service
+  dbaas-service:
+    build:
+      context: ./services/dbaas
+      dockerfile: Dockerfile
+    container_name: nexus-dbaas
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8420
+      SUPPORTED_ENGINES: postgres,mysql,mongodb,redis,cassandra
+    ports:
+      - "8420:8420"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+    networks:
+      - nexus-network
+
+  dbaas-frontend:
+    build:
+      context: ./services/dbaas/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-dbaas-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8420
+    ports:
+      - "3050:3000"
+    networks:
+      - nexus-network
+
+  # Web Hosting Service
+  webhosting-service:
+    build:
+      context: ./services/webhosting
+      dockerfile: Dockerfile
+    container_name: nexus-webhosting
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8430
+    ports:
+      - "8430:8430"
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - webhosting-data:/var/www
+    networks:
+      - nexus-network
+
+  # CDN3 - Content Delivery Network
+  cdn-service:
+    build:
+      context: ./services/cdn
+      dockerfile: Dockerfile
+    container_name: nexus-cdn
+    environment:
+      <<: *common-env
+      PORT: 8440
+      STREAMING_ENABLED: "true"
+      CACHE_TTL: 3600
+    ports:
+      - "8440:8440"
+    volumes:
+      - cdn-cache:/var/cache/cdn
+    networks:
+      - nexus-network
+
+  # iPaaS - Integration Platform
+  ipaas-service:
+    build:
+      context: ./services/ipaas
+      dockerfile: Dockerfile
+    container_name: nexus-ipaas
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8450
+    ports:
+      - "8450:8450"
+    networks:
+      - nexus-network
+
+  ipaas-frontend:
+    build:
+      context: ./services/ipaas/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-ipaas-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8450
+    ports:
+      - "3060:3000"
+    networks:
+      - nexus-network
+
+  # BPA - Business Process Automation
+  bpa-service:
+    build:
+      context: ./services/bpa
+      dockerfile: Dockerfile
+    container_name: nexus-bpa
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8460
+      WORKFLOW_ENGINE: camunda
+    ports:
+      - "8460:8460"
+    networks:
+      - nexus-network
+
+  bpa-frontend:
+    build:
+      context: ./services/bpa/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-bpa-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8460
+    ports:
+      - "3070:3000"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # AI & DESIGN SERVICES
+  # ============================================================================
+
+  # Designer2 - AI Design Tool
+  designer-service:
+    build:
+      context: ./services/designer
+      dockerfile: Dockerfile
+    container_name: nexus-designer
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8500
+      AI_ENABLED: "true"
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8500:8500"
+    networks:
+      - nexus-network
+
+  designer-frontend:
+    build:
+      context: ./services/designer/frontend
+      dockerfile: Dockerfile
+    container_name: nexus-designer-frontend
+    environment:
+      NEXT_PUBLIC_API_URL: http://localhost:8500
+    ports:
+      - "3080:3000"
+    networks:
+      - nexus-network
+
+  # AI Agents Platform (700+ Agents)
+  ai-agents-service:
+    build:
+      context: ./services/ai-agents
+      dockerfile: Dockerfile
+    container_name: nexus-ai-agents
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8510
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+      ANTHROPIC_API_KEY: ${ANTHROPIC_API_KEY}
+      AGENTS_COUNT: 700
+    ports:
+      - "8510:8510"
+    networks:
+      - nexus-network
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1
+              capabilities: [gpu]
+
+  # PromptQL Service
+  promptql-service:
+    build:
+      context: ./services/promptql
+      dockerfile: Dockerfile
+    container_name: nexus-promptql
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8520
+      OPENAI_API_KEY: ${OPENAI_API_KEY}
+    ports:
+      - "8520:8520"
+    networks:
+      - nexus-network
+
+  # MMP - Mobile Measurement Partner
+  mmp-service:
+    build:
+      context: ./services/mmp
+      dockerfile: Dockerfile
+    container_name: nexus-mmp
+    environment:
+      <<: [*common-env, *database-env]
+      PORT: 8530
+      ANALYTICS_ENGINE: clickhouse
+    ports:
+      - "8530:8530"
+    networks:
+      - nexus-network
+
+  # ============================================================================
+  # MONITORING & OBSERVABILITY
+  # ============================================================================
+
+  # Prometheus
+  prometheus:
+    image: prom/prometheus:latest
+    container_name: nexus-prometheus
+    command:
+      - '--config.file=/etc/prometheus/prometheus.yml'
+      - '--storage.tsdb.path=/prometheus'
+      - '--web.console.libraries=/usr/share/prometheus/console_libraries'
+      - '--web.console.templates=/usr/share/prometheus/consoles'
+    volumes:
+      - ./monitoring/prometheus/prometheus.yml:/etc/prometheus/prometheus.yml
+      - ./monitoring/prometheus/alerts:/etc/prometheus/alerts
+      - prometheus-data:/prometheus
+    ports:
+      - "9090:9090"
+    networks:
+      - nexus-network
+
+  # Grafana
+  grafana:
+    image: grafana/grafana:latest
+    container_name: nexus-grafana
+    environment:
+      GF_SECURITY_ADMIN_PASSWORD: ${GRAFANA_PASSWORD:-admin}
+      GF_INSTALL_PLUGINS: grafana-clock-panel,grafana-simple-json-datasource
+    volumes:
+      - ./monitoring/grafana/dashboards:/etc/grafana/provisioning/dashboards
+      - ./monitoring/grafana/datasources:/etc/grafana/provisioning/datasources
+      - grafana-data:/var/lib/grafana
+    ports:
+      - "3010:3000"
+    depends_on:
+      - prometheus
+    networks:
+      - nexus-network
+
+  # Loki - Log Aggregation
+  loki:
+    image: grafana/loki:latest
+    container_name: nexus-loki
+    ports:
+      - "3100:3100"
+    volumes:
+      - ./monitoring/loki/loki-config.yml:/etc/loki/local-config.yaml
+      - loki-data:/loki
+    networks:
+      - nexus-network
+
+  # Jaeger - Distributed Tracing
+  jaeger:
+    image: jaegertracing/all-in-one:latest
+    container_name: nexus-jaeger
+    environment:
+      COLLECTOR_ZIPKIN_HOST_PORT: :9411
+    ports:
+      - "5775:5775/udp"
+      - "6831:6831/udp"
+      - "6832:6832/udp"
+      - "5778:5778"
+      - "16686:16686"
+      - "14268:14268"
+      - "14250:14250"
+      - "9411:9411"
+    networks:
+      - nexus-network
+
+  # AIOps Service
+  aiops-service:
+    build:
+      context: ./nexus-office-suite/monitoring/aiops
+      dockerfile: Dockerfile
+    container_name: nexus-aiops
+    environment:
+      <<: *common-env
+      PORT: 8600
+      PROMETHEUS_URL: http://prometheus:9090
+      ML_ENABLED: "true"
+    ports:
+      - "8600:8600"
+    depends_on:
+      - prometheus
+    networks:
+      - nexus-network
+
+networks:
+  nexus-network:
+    driver: bridge
+    ipam:
+      config:
+        - subnet: 172.28.0.0/16
+
+volumes:
+  postgres-data:
+  redis-data:
+  mongodb-data:
+  minio-data:
+  elasticsearch-data:
+  prometheus-data:
+  grafana-data:
+  loki-data:
+  email-data:
+  webhosting-data:
+  cdn-cache:

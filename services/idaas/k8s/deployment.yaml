@@ -1,0 +1,208 @@
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: nexus-idaas
+
+---
+
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: idaas-config
+  namespace: nexus-idaas
+data:
+  NODE_ENV: "production"
+  PORT: "8100"
+  LOG_LEVEL: "info"
+  LOG_FORMAT: "json"
+  MFA_ISSUER: "NEXUS"
+  MFA_WINDOW: "2"
+  BCRYPT_ROUNDS: "10"
+  MAX_LOGIN_ATTEMPTS: "5"
+  LOCKOUT_DURATION: "30"
+
+---
+
+apiVersion: v1
+kind: Secret
+metadata:
+  name: idaas-secrets
+  namespace: nexus-idaas
+type: Opaque
+stringData:
+  POSTGRES_HOST: "postgres.nexus-core.svc.cluster.local"
+  POSTGRES_PORT: "5432"
+  POSTGRES_DB: "idaas"
+  POSTGRES_USER: "nexus"
+  POSTGRES_PASSWORD: "changeme"
+  REDIS_HOST: "redis.nexus-core.svc.cluster.local"
+  REDIS_PORT: "6379"
+  REDIS_PASSWORD: "changeme"
+  JWT_SECRET: "changeme-min-32-characters-long"
+  JWT_EXPIRES_IN: "15m"
+  REFRESH_TOKEN_EXPIRES_IN: "7d"
+
+---
+
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: idaas
+  namespace: nexus-idaas
+  labels:
+    app: idaas
+    component: authentication
+spec:
+  replicas: 3
+  strategy:
+    type: RollingUpdate
+    rollingUpdate:
+      maxSurge: 1
+      maxUnavailable: 0
+  selector:
+    matchLabels:
+      app: idaas
+  template:
+    metadata:
+      labels:
+        app: idaas
+        component: authentication
+    spec:
+      serviceAccountName: idaas
+      securityContext:
+        runAsNonRoot: true
+        runAsUser: 1000
+        fsGroup: 1000
+
+      containers:
+      - name: idaas
+        image: nexus/idaas:1.0.0
+        imagePullPolicy: IfNotPresent
+        ports:
+        - name: http
+          containerPort: 8100
+          protocol: TCP
+
+        envFrom:
+        - configMapRef:
+            name: idaas-config
+        - secretRef:
+            name: idaas-secrets
+
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 512Mi
+
+        livenessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+          initialDelaySeconds: 30
+          periodSeconds: 10
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        readinessProbe:
+          httpGet:
+            path: /api/v1/health
+            port: http
+          initialDelaySeconds: 10
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+
+        lifecycle:
+          preStop:
+            exec:
+              command: ["/bin/sh", "-c", "sleep 10"]
+
+      terminationGracePeriodSeconds: 30
+
+---
+
+apiVersion: v1
+kind: Service
+metadata:
+  name: idaas
+  namespace: nexus-idaas
+  labels:
+    app: idaas
+spec:
+  type: ClusterIP
+  ports:
+  - name: http
+    port: 8100
+    targetPort: http
+    protocol: TCP
+  selector:
+    app: idaas
+
+---
+
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: idaas
+  namespace: nexus-idaas
+
+---
+
+apiVersion: autoscaling/v2
+kind: HorizontalPodAutoscaler
+metadata:
+  name: idaas
+  namespace: nexus-idaas
+spec:
+  scaleTargetRef:
+    apiVersion: apps/v1
+    kind: Deployment
+    name: idaas
+  minReplicas: 3
+  maxReplicas: 10
+  metrics:
+  - type: Resource
+    resource:
+      name: cpu
+      target:
+        type: Utilization
+        averageUtilization: 70
+  - type: Resource
+    resource:
+      name: memory
+      target:
+        type: Utilization
+        averageUtilization: 80
+  behavior:
+    scaleDown:
+      stabilizationWindowSeconds: 300
+      policies:
+      - type: Percent
+        value: 50
+        periodSeconds: 60
+    scaleUp:
+      stabilizationWindowSeconds: 0
+      policies:
+      - type: Percent
+        value: 100
+        periodSeconds: 15
+      - type: Pods
+        value: 2
+        periodSeconds: 15
+      selectPolicy: Max
+
+---
+
+apiVersion: policy/v1
+kind: PodDisruptionBudget
+metadata:
+  name: idaas
+  namespace: nexus-idaas
+spec:
+  minAvailable: 2
+  selector:
+    matchLabels:
+      app: idaas

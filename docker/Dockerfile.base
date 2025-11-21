@@ -1,0 +1,29 @@
+# Base Docker image for NEXUS Platform services
+# Optimized for production with multi-stage builds
+
+FROM node:20-alpine AS node-base
+WORKDIR /app
+RUN apk add --no-cache \
+    python3 \
+    make \
+    g++ \
+    ca-certificates \
+    && npm install -g pnpm
+
+FROM golang:1.21-alpine AS go-base
+WORKDIR /app
+RUN apk add --no-cache \
+    git \
+    ca-certificates \
+    gcc \
+    musl-dev
+
+FROM python:3.11-slim AS python-base
+WORKDIR /app
+RUN apt-get update && apt-get install -y \
+    gcc \
+    g++ \
+    make \
+    libpq-dev \
+    && rm -rf /var/lib/apt/lists/*
+RUN pip install --no-cache-dir --upgrade pip setuptools wheel
