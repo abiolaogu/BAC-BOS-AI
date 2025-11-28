@@ -33,15 +33,17 @@ import {
 } from '../utils/jwt';
 import { config } from '../config';
 import { AuditService } from './audit.service';
-import { MFAService } from './mfa.service';
+import { EmailService } from './email.service';
 
 export class AuthService {
   private auditService: AuditService;
   private mfaService: MFAService;
+  private emailService: EmailService;
 
   constructor() {
     this.auditService = new AuditService();
     this.mfaService = new MFAService();
+    this.emailService = new EmailService();
   }
 
   /**
@@ -135,12 +137,20 @@ export class AuthService {
       [user.id, verificationToken]
     );
 
-    // TODO: Send verification email
-    logger.info('User registered, verification email should be sent', {
-      userId: user.id,
-      email: user.email,
-      verificationToken,
-    });
+    // Send verification email
+    if (config.email.enabled) {
+      try {
+        await this.emailService.sendVerificationEmail(user.email, verificationToken);
+      } catch (error) {
+        logger.error('Failed to send verification email', { error, userId: user.id });
+        // Don't fail registration if email fails, but log it
+      }
+    } else {
+      logger.info('Email disabled, skipping verification email', {
+        userId: user.id,
+        verificationToken,
+      });
+    }
 
     // Generate tokens
     const { accessToken, refreshToken, expiresIn } = generateTokenPair({
@@ -517,12 +527,19 @@ export class AuthService {
       [user.id, resetToken]
     );
 
-    // TODO: Send password reset email
-    logger.info('Password reset requested', {
-      userId: user.id,
-      email: user.email,
-      resetToken,
-    });
+    // Send password reset email
+    if (config.email.enabled) {
+      try {
+        await this.emailService.sendPasswordResetEmail(user.email, resetToken);
+      } catch (error) {
+        logger.error('Failed to send password reset email', { error, userId: user.id });
+      }
+    } else {
+      logger.info('Email disabled, skipping password reset email', {
+        userId: user.id,
+        resetToken,
+      });
+    }
 
     // Audit log
     await this.auditService.log({

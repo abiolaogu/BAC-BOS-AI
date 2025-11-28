@@ -7,6 +7,7 @@ import { verifyToken } from '../utils/jwt';
 import { TokenPayload, IDaaSError, ErrorCode, TokenType } from '../types';
 import { cache } from '../utils/cache';
 import { logger } from '../utils/logger';
+import { db } from '../database';
 
 // Extend Express Request to include user
 declare global {
@@ -51,14 +52,14 @@ export async function authenticate(
     }
 
     // Check if session exists (optional - can be disabled for performance)
-    // const sessionExists = await cache.exists(`session:${payload.userId}`);
-    // if (!sessionExists) {
-    //   throw new IDaaSError(
-    //     ErrorCode.INVALID_TOKEN,
-    //     'Session not found',
-    //     401
-    //   );
-    // }
+    const sessionExists = await cache.exists(`session:${payload.userId}`);
+    if (!sessionExists) {
+      throw new IDaaSError(
+        ErrorCode.INVALID_TOKEN,
+        'Session not found',
+        401
+      );
+    }
 
     // Attach user to request
     req.user = payload;
@@ -132,7 +133,8 @@ export function requirePermission(resource: string, action: string) {
       const hasPermission = await checkPermission(
         req.user.userId,
         resource,
-        action
+        action,
+        req.user.organizationId
       );
 
       if (!hasPermission) {
@@ -168,16 +170,39 @@ export function requirePermission(resource: string, action: string) {
 }
 
 /**
- * Check if user has permission (simplified)
+ * Check if user has permission
  */
 async function checkPermission(
   userId: string,
   resource: string,
-  action: string
+  action: string,
+  organizationId?: string
 ): Promise<boolean> {
-  // TODO: Implement proper permission checking against database
-  // For now, return true for all authenticated users
-  return true;
+  try {
+    // Check for system roles or organization roles
+    const query = `
+      SELECT COUNT(*) as count
+      FROM permissions p
+      JOIN roles r ON p.role_id = r.id
+      JOIN organization_memberships om ON om.role = r.name
+      WHERE om.user_id = $1
+      AND (om.organization_id = $2 OR r.is_system = true)
+      AND (p.resource = '*' OR p.resource = $3)
+      AND (p.action = '*' OR p.action = $4)
+    `;
+
+    const result = await db.queryOne<{ count: string }>(query, [
+      userId,
+      organizationId || null,
+      resource,
+      action,
+    ]);
+
+    return parseInt(result?.count || '0', 10) > 0;
+  } catch (error) {
+    logger.error('Failed to check permission', { error, userId, resource, action });
+    return false;
+  }
 }
 
 /**

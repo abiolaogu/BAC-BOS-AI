@@ -1,0 +1,664 @@
+{
+    "agents": [
+        {
+            "id": "sales_lead_qualifier",
+            "name": "Sales Lead Qualifier",
+            "role": "Sales",
+            "description": "Qualifies inbound leads and scores them",
+            "capabilities": [
+                "lead_scoring",
+                "qualification"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_email_drafter",
+            "name": "Sales Email Drafter",
+            "role": "Sales",
+            "description": "Drafts personalized sales emails",
+            "capabilities": [
+                "email_drafting",
+                "personalization"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_proposal_writer",
+            "name": "Sales Proposal Writer",
+            "role": "Sales",
+            "description": "Creates sales proposals and quotes",
+            "capabilities": [
+                "proposal_generation",
+                "pricing"
+            ],
+            "model": "gpt-4-turbo"
+        },
+        {
+            "id": "sales_followup_automator",
+            "name": "Sales Follow-up Automator",
+            "role": "Sales",
+            "description": "Automates follow-up sequences",
+            "capabilities": [
+                "followup_automation",
+                "scheduling"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "sales_opportunity_analyzer",
+            "name": "Opportunity Analyzer",
+            "role": "Sales",
+            "description": "Analyzes sales opportunities and forecasts",
+            "capabilities": [
+                "forecasting",
+                "analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_closer_assistant",
+            "name": "Closer Assistant",
+            "role": "Sales",
+            "description": "Helps close deals with objection handling",
+            "capabilities": [
+                "objection_handling",
+                "negotiation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_pipeline_optimizer",
+            "name": "Pipeline Optimizer",
+            "role": "Sales",
+            "description": "Optimizes sales pipeline flow",
+            "capabilities": [
+                "pipeline_optimization",
+                "analytics"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_account_planner",
+            "name": "Account Planner",
+            "role": "Sales",
+            "description": "Creates strategic account plans",
+            "capabilities": [
+                "account_planning",
+                "strategy"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_competitor_analyst",
+            "name": "Competitor Analyst",
+            "role": "Sales",
+            "description": "Analyzes competitor positioning",
+            "capabilities": [
+                "competitor_analysis",
+                "market_research"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "sales_demo_scheduler",
+            "name": "Demo Scheduler",
+            "role": "Sales",
+            "description": "Schedules product demonstrations",
+            "capabilities": [
+                "scheduling",
+                "calendar_management"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "support_tier1_bot",
+            "name": "Tier 1 Support Bot",
+            "role": "Support",
+            "description": "Handles tier 1 customer queries",
+            "capabilities": [
+                "ticket_resolution",
+                "faq"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "support_ticket_router",
+            "name": "Ticket Router",
+            "role": "Support",
+            "description": "Routes tickets to appropriate teams",
+            "capabilities": [
+                "ticket_routing",
+                "classification"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "support_kb_writer",
+            "name": "Knowledge Base Writer",
+            "role": "Support",
+            "description": "Creates KB articles from tickets",
+            "capabilities": [
+                "kb_generation",
+                "documentation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "support_escalation_manager",
+            "name": "Escalation Manager",
+            "role": "Support",
+            "description": "Manages ticket escalations",
+            "capabilities": [
+                "escalation_management",
+                "priority_assignment"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "support_sla_monitor",
+            "name": "SLA Monitor",
+            "role": "Support",
+            "description": "Monitors SLA compliance",
+            "capabilities": [
+                "sla_monitoring",
+                "alerts"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "support_sentiment_analyzer",
+            "name": "Sentiment Analyzer",
+            "role": "Support",
+            "description": "Analyzes customer sentiment",
+            "capabilities": [
+                "sentiment_analysis",
+                "emotion_detection"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "support_refund_processor",
+            "name": "Refund Processor",
+            "role": "Support",
+            "description": "Processes refund requests",
+            "capabilities": [
+                "refund_processing",
+                "policy_enforcement"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "support_chat_assistant",
+            "name": "Chat Assistant",
+            "role": "Support",
+            "description": "Provides real-time chat support",
+            "capabilities": [
+                "live_chat",
+                "multitasking"
+            ],
+            "model": "gpt-4-turbo"
+        },
+        {
+            "id": "support_email_responder",
+            "name": "Email Responder",
+            "role": "Support",
+            "description": "Responds to support emails",
+            "capabilities": [
+                "email_response",
+                "auto_reply"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "support_feedback_collector",
+            "name": "Feedback Collector",
+            "role": "Support",
+            "description": "Collects and analyzes feedback",
+            "capabilities": [
+                "feedback_collection",
+                "survey_generation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_resume_screener",
+            "name": "Resume Screener",
+            "role": "HR",
+            "description": "Screens resumes against job requirements",
+            "capabilities": [
+                "resume_screening",
+                "candidate_matching"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_interview_scheduler",
+            "name": "Interview Scheduler",
+            "role": "HR",
+            "description": "Schedules candidate interviews",
+            "capabilities": [
+                "interview_scheduling",
+                "calendar_coordination"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "hr_onboarding_coordinator",
+            "name": "Onboarding Coordinator",
+            "role": "HR",
+            "description": "Coordinates new hire onboarding",
+            "capabilities": [
+                "onboarding_automation",
+                "task_tracking"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_policy_advisor",
+            "name": "Policy Advisor",
+            "role": "HR",
+            "description": "Advises on HR policies",
+            "capabilities": [
+                "policy_guidance",
+                "compliance"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_performance_reviewer",
+            "name": "Performance Reviewer",
+            "role": "HR",
+            "description": "Assists with performance reviews",
+            "capabilities": [
+                "performance_analysis",
+                "feedback_generation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_benefits_advisor",
+            "name": "Benefits Advisor",
+            "role": "HR",
+            "description": "Advises employees on benefits",
+            "capabilities": [
+                "benefits_explanation",
+                "enrollment_assistance"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "hr_training_coordinator",
+            "name": "Training Coordinator",
+            "role": "HR",
+            "description": "Coordinates employee training",
+            "capabilities": [
+                "training_scheduling",
+                "skill_gap_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_exit_interviewer",
+            "name": "Exit Interviewer",
+            "role": "HR",
+            "description": "Conducts exit interviews",
+            "capabilities": [
+                "exit_interview",
+                "retention_insights"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_compensation_analyst",
+            "name": "Compensation Analyst",
+            "role": "HR",
+            "description": "Analyzes compensation data",
+            "capabilities": [
+                "compensation_analysis",
+                "market_benchmarking"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "hr_diversity_tracker",
+            "name": "Diversity Tracker",
+            "role": "HR",
+            "description": "Tracks diversity metrics",
+            "capabilities": [
+                "diversity_tracking",
+                "reporting"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_invoice_generator",
+            "name": "Invoice Generator",
+            "role": "Finance",
+            "description": "Generates customer invoices",
+            "capabilities": [
+                "invoice_generation",
+                "billing"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_expense_categorizer",
+            "name": "Expense Categorizer",
+            "role": "Finance",
+            "description": "Categorizes expenses automatically",
+            "capabilities": [
+                "expense_categorization",
+                "tagging"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "finance_fraud_detector",
+            "name": "Fraud Detector",
+            "role": "Finance",
+            "description": "Detects fraudulent transactions",
+            "capabilities": [
+                "fraud_detection",
+                "anomaly_detection"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_budget_planner",
+            "name": "Budget Planner",
+            "role": "Finance",
+            "description": "Creates budget plans",
+            "capabilities": [
+                "budget_planning",
+                "forecasting"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_reconciler",
+            "name": "Account Reconciler",
+            "role": "Finance",
+            "description": "Reconciles accounts",
+            "capabilities": [
+                "reconciliation",
+                "variance_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_cash_flow_forecaster",
+            "name": "Cash Flow Forecaster",
+            "role": "Finance",
+            "description": "Forecasts cash flow",
+            "capabilities": [
+                "cash_flow_forecasting",
+                "liquidity_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_tax_advisor",
+            "name": "Tax Advisor",
+            "role": "Finance",
+            "description": "Provides tax guidance",
+            "capabilities": [
+                "tax_advice",
+                "compliance"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_audit_assistant",
+            "name": "Audit Assistant",
+            "role": "Finance",
+            "description": "Assists with audits",
+            "capabilities": [
+                "audit_preparation",
+                "documentation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_payroll_processor",
+            "name": "Payroll Processor",
+            "role": "Finance",
+            "description": "Processes payroll",
+            "capabilities": [
+                "payroll_processing",
+                "compliance"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "finance_collections_manager",
+            "name": "Collections Manager",
+            "role": "Finance",
+            "description": "Manages accounts receivable",
+            "capabilities": [
+                "collections",
+                "dunning"
+            ],
+            "model": "gpt-3.5-turbo"
+        },
+        {
+            "id": "marketing_content_creator",
+            "name": "Content Creator",
+            "role": "Marketing",
+            "description": "Creates marketing content",
+            "capabilities": [
+                "content_generation",
+                "copywriting"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_email_campaigner",
+            "name": "Email Campaigner",
+            "role": "Marketing",
+            "description": "Designs email campaigns",
+            "capabilities": [
+                "email_campaigns",
+                "segmentation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_social_media_manager",
+            "name": "Social Media Manager",
+            "role": "Marketing",
+            "description": "Manages social media posts",
+            "capabilities": [
+                "social_media",
+                "scheduling"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_seo_optimizer",
+            "name": "SEO Optimizer",
+            "role": "Marketing",
+            "description": "Optimizes content for SEO",
+            "capabilities": [
+                "seo_optimization",
+                "keyword_research"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_ad_copywriter",
+            "name": "Ad Copywriter",
+            "role": "Marketing",
+            "description": "Writes ad copy",
+            "capabilities": [
+                "ad_copy",
+                "a_b_testing"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_campaign_analyzer",
+            "name": "Campaign Analyzer",
+            "role": "Marketing",
+            "description": "Analyzes campaign performance",
+            "capabilities": [
+                "campaign_analysis",
+                "roi_tracking"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_persona_builder",
+            "name": "Persona Builder",
+            "role": "Marketing",
+            "description": "Builds customer personas",
+            "capabilities": [
+                "persona_development",
+                "segmentation"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_landing_page_optimizer",
+            "name": "Landing Page Optimizer",
+            "role": "Marketing",
+            "description": "Optimizes landing pages",
+            "capabilities": [
+                "landing_page_optimization",
+                "conversion_optimization"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_influencer_identifier",
+            "name": "Influencer Identifier",
+            "role": "Marketing",
+            "description": "Identifies potential influencers",
+            "capabilities": [
+                "influencer_research",
+                "outreach"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "marketing_brand_monitor",
+            "name": "Brand Monitor",
+            "role": "Marketing",
+            "description": "Monitors brand mentions",
+            "capabilities": [
+                "brand_monitoring",
+                "sentiment_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_contract_reviewer",
+            "name": "Contract Reviewer",
+            "role": "Legal",
+            "description": "Reviews contracts for risks",
+            "capabilities": [
+                "contract_review",
+                "risk_assessment"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_compliance_checker",
+            "name": "Compliance Checker",
+            "role": "Legal",
+            "description": "Checks regulatory compliance",
+            "capabilities": [
+                "compliance_checking",
+                "regulatory_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_nda_generator",
+            "name": "NDA Generator",
+            "role": "Legal",
+            "description": "Generates NDAs",
+            "capabilities": [
+                "nda_generation",
+                "document_templates"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_ip_monitor",
+            "name": "IP Monitor",
+            "role": "Legal",
+            "description": "Monitors intellectual property",
+            "capabilities": [
+                "ip_monitoring",
+                "trademark_search"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_policy_drafter",
+            "name": "Policy Drafter",
+            "role": "Legal",
+            "description": "Drafts company policies",
+            "capabilities": [
+                "policy_drafting",
+                "compliance"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_litigation_research",
+            "name": "Litigation Researcher",
+            "role": "Legal",
+            "description": "Researches case law",
+            "capabilities": [
+                "legal_research",
+                "case_analysis"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_privacy_advisor",
+            "name": "Privacy Advisor",
+            "role": "Legal",
+            "description": "Advises on privacy laws (GDPR, etc.)",
+            "capabilities": [
+                "privacy_compliance",
+                "data_protection"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_terms_generator",
+            "name": "Terms Generator",
+            "role": "Legal",
+            "description": "Generates terms of service",
+            "capabilities": [
+                "tos_generation",
+                "legal_writing"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_due_diligence",
+            "name": "Due Diligence Assistant",
+            "role": "Legal",
+            "description": "Assists with due diligence",
+            "capabilities": [
+                "due_diligence",
+                "document_review"
+            ],
+            "model": "gpt-4"
+        },
+        {
+            "id": "legal_employment_advisor",
+            "name": "Employment Law Advisor",
+            "role": "Legal",
+            "description": "Advises on employment law",
+            "capabilities": [
+                "employment_law",
+                "compliance"
+            ],
+            "model": "gpt-4"
+        }
+    ]
+}

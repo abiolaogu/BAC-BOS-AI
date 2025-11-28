@@ -19,6 +19,11 @@ type Config struct {
 	Security   SecurityConfig
 	Email      EmailConfig
 	Redis      RedisConfig
+	IDaaS      IDaaSConfig
+}
+
+type IDaaSConfig struct {
+	URL string
 }
 
 type ServerConfig struct {
@@ -181,6 +186,9 @@ func Load() (*Config, error) {
 			Port:     getEnv("REDIS_PORT", "6379"),
 			Password: getEnv("REDIS_PASSWORD", ""),
 			DB:       int(getEnvInt64("REDIS_DB", 0)),
+		},
+		IDaaS: IDaaSConfig{
+			URL: getEnv("IDAAS_URL", "http://localhost:8100/api/v1"),
 		},
 	}
 

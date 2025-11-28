@@ -14,6 +14,11 @@ interface Config {
   nodeEnv: string;
   apiVersion: string;
 
+  // App
+  app: {
+    url: string;
+  };
+
   // Database
   database: {
     host: string;
@@ -132,6 +137,11 @@ export const config: Config = {
   port: parseInt(process.env.PORT || '8100', 10),
   nodeEnv: process.env.NODE_ENV || 'development',
   apiVersion: 'v1',
+
+  // App
+  app: {
+    url: process.env.APP_URL || 'http://localhost:3000',
+  },
 
   // Database
   database: {

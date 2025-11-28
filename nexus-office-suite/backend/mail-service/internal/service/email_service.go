@@ -19,10 +19,10 @@ import (
 
 // EmailService handles email business logic
 type EmailService struct {
-	config       *config.Config
-	emailRepo    *repository.EmailRepository
-	folderRepo   *repository.FolderRepository
-	minioClient  *minio.Client
+	config      *config.Config
+	emailRepo   *repository.EmailRepository
+	folderRepo  *repository.FolderRepository
+	minioClient *minio.Client
 }
 
 // NewEmailService creates a new email service
@@ -69,12 +69,28 @@ func (s *EmailService) SendEmail(userID string, req *model.ComposeEmailRequest) 
 		return nil, fmt.Errorf("failed to get sent folder: %w", err)
 	}
 
+	// Get user profile
+	userProfile, err := s.getUserProfile(userID)
+	fromName := userID
+	fromEmail := fmt.Sprintf("%s@nexusmail.local", userID)
+
+	if err == nil && userProfile != nil {
+		if userProfile.FirstName != "" || userProfile.LastName != "" {
+			fromName = fmt.Sprintf("%s %s", userProfile.FirstName, userProfile.LastName)
+		}
+		// Optionally use user's real email if configured, but for internal mail service we might want to stick to internal domain
+		// or use the user's username/email prefix.
+		// For now, we keep the internal domain logic but update the name.
+	} else {
+		log.Warn().Err(err).Str("userID", userID).Msg("Failed to fetch user profile, using defaults")
+	}
+
 	// Create email object
 	email := &model.Email{
 		ID:             uuid.New().String(),
 		UserID:         userID,
-		From:           fmt.Sprintf("%s@nexusmail.local", userID), // TODO: Get from user profile
-		FromName:       userID,
+		From:           fromEmail,
+		FromName:       fromName,
 		To:             model.StringArray(req.To),
 		CC:             model.StringArray(req.CC),
 		BCC:            model.StringArray(req.BCC),
@@ -122,15 +138,17 @@ func (s *EmailService) SendEmail(userID string, req *model.ComposeEmailRequest) 
 
 	// Send email (if not scheduled)
 	if req.ScheduledAt == nil || req.ScheduledAt.Before(time.Now()) {
-		err = s.sendViaSMTP(email)
-		if err != nil {
-			log.Error().Err(err).Msg("Failed to send email via SMTP")
-			// Don't return error - email is saved in database
-		} else {
-			now := time.Now()
-			email.SentAt = &now
-			s.emailRepo.Update(email)
-		}
+		// Send asynchronously to improve performance
+		go func(e *model.Email) {
+			err := s.sendViaSMTP(e)
+			if err != nil {
+				log.Error().Err(err).Msg("Failed to send email via SMTP")
+			} else {
+				now := time.Now()
+				e.SentAt = &now
+				s.emailRepo.Update(e)
+			}
+		}(email)
 	}
 
 	log.Info().

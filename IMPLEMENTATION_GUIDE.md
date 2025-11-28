@@ -272,6 +272,8 @@ nexus-bos/
 ### Fully Functional
 - ✅ **NEXUS Engine:** Accepts activation requests, orchestrates provisioning
 - ✅ **CRM Service:** CRUD operations for contacts, leads, opportunities
+- ✅ **IDaaS Service:** Authentication, Email Verification, Password Reset, Permission Checking
+- ✅ **Mail Service:** SMTP/IMAP, User Profile Integration
 - ✅ **Docker Compose:** Runs entire stack locally
 - ✅ **Industry Presets:** eCommerce blueprint fully defined
 - ✅ **Helm Charts:** Production-ready Kubernetes deployment
