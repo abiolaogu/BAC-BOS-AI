@@ -1,0 +1,25 @@
+apiVersion: networking.k8s.io/v1
+kind: Ingress
+metadata:
+  name: nexus-ingress
+  annotations:
+    {{- toYaml .Values.ingress.annotations | nindent 4 }}
+spec:
+  ingressClassName: {{ .Values.ingress.className }}
+  tls:
+    - hosts:
+        - {{ .Values.global.domain }}
+      secretName: nexus-tls
+  rules:
+    - host: {{ .Values.global.domain }}
+      http:
+        paths:
+          {{- range $name, $svc := .Values.services }}
+          - path: /api/v1/{{ $name }}
+            pathType: Prefix
+            backend:
+              service:
+                name: {{ $name }}-service
+                port:
+                  number: 80
+          {{- end }}

@@ -59,6 +59,8 @@ func main() {
 	}
 
 	http.HandleFunc("/api/v1/payments", handler.HandlePayment)
+	http.HandleFunc("/api/v1/webhooks/stripe", handler.HandleStripeWebhook)
+	http.HandleFunc("/api/v1/webhooks/paystack", handler.HandlePaystackWebhook)
 	http.HandleFunc("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.WriteHeader(http.StatusOK)
 		w.Write([]byte("OK"))
@@ -73,4 +75,36 @@ func main() {
 	if err := http.ListenAndServe(":"+port, nil); err != nil {
 		log.Fatalf("Failed to start server: %v", err)
 	}
+}
+
+func (h *PaymentHandler) HandleStripeWebhook(w http.ResponseWriter, r *http.Request) {
+	// In a real implementation, verify the signature using STRIPE_WEBHOOK_SECRET
+	// signature := r.Header.Get("Stripe-Signature")
+
+	var event map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Received Stripe Webhook: %v", event["type"])
+
+	// Process event (mock logic)
+	w.WriteHeader(http.StatusOK)
+}
+
+func (h *PaymentHandler) HandlePaystackWebhook(w http.ResponseWriter, r *http.Request) {
+	// In a real implementation, verify the signature using PAYSTACK_SECRET_KEY (HMAC SHA512)
+	// signature := r.Header.Get("x-paystack-signature")
+
+	var event map[string]interface{}
+	if err := json.NewDecoder(r.Body).Decode(&event); err != nil {
+		http.Error(w, "Invalid request body", http.StatusBadRequest)
+		return
+	}
+
+	log.Printf("Received Paystack Webhook: %v", event["event"])
+
+	// Process event (mock logic)
+	w.WriteHeader(http.StatusOK)
 }

@@ -1,0 +1,76 @@
+global:
+  domain: nexus.example.com
+  environment: production
+
+redpanda:
+  enabled: true
+  replicaCount: 3
+
+postgres:
+  enabled: true
+  storage: 10Gi
+
+redis:
+  enabled: true
+
+services:
+  nexusEngine:
+    image: nexus-engine:latest
+    replicas: 2
+    port: 8080
+  
+  crm:
+    image: crm-service:latest
+    replicas: 2
+    port: 8081
+
+  finance:
+    image: finance-service:latest
+    replicas: 2
+    port: 8082
+    env:
+      STRIPE_SECRET_KEY: ""
+      PAYSTACK_SECRET_KEY: ""
+
+  documents:
+    image: documents-service:latest
+    replicas: 2
+    port: 8083
+
+  hr:
+    image: hr-service:latest
+    replicas: 2
+    port: 8084
+
+  inventory:
+    image: inventory-service:latest
+    replicas: 2
+    port: 8085
+
+  ai:
+    image: ai-service:latest
+    replicas: 3
+    port: 8086
+    env:
+      OPENAI_API_KEY: ""
+
+  projects:
+    image: projects-service:latest
+    replicas: 2
+    port: 8087
+
+  marketing:
+    image: marketing-service:latest
+    replicas: 2
+    port: 8088
+
+  support:
+    image: support-service:latest
+    replicas: 2
+    port: 8089
+
+ingress:
+  enabled: true
+  className: nginx
+  annotations:
+    cert-manager.io/cluster-issuer: letsencrypt-prod

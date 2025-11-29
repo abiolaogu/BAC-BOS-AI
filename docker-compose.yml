@@ -135,14 +135,97 @@ services:
     environment:
       - PORT=8086
       - AGENTS_CONFIG_PATH=config/agents.json
-      - OPENAI_API_KEY=${OPENAI_API_KEY}
     volumes:
-      - ./services/ai/config:/app/config
+      - ./services/ai:/app
     healthcheck:
-      test: [ "CMD", "wget", "--spider", "-q", "http://localhost:8086/health" ]
-      interval: 30s
-      timeout: 10s
-      retries: 3
+      test: [ "CMD", "curl", "-f", "http://localhost:8086/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  documents-service:
+    build:
+      context: ./services/documents
+      dockerfile: Dockerfile
+    ports:
+      - "8083:8083"
+    environment:
+      - PORT=8083
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8083/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  hr-service:
+    build:
+      context: ./services/hr
+      dockerfile: Dockerfile
+    ports:
+      - "8084:8084"
+    environment:
+      - PORT=8084
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8084/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  inventory-service:
+    build:
+      context: ./services/inventory
+      dockerfile: Dockerfile
+    ports:
+      - "8085:8085"
+    environment:
+      - PORT=8085
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8085/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  projects-service:
+    build:
+      context: ./services/projects
+      dockerfile: Dockerfile
+    ports:
+      - "8087:8087"
+    environment:
+      - PORT=8087
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8087/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  marketing-service:
+    build:
+      context: ./services/marketing
+      dockerfile: Dockerfile
+    ports:
+      - "8088:8088"
+    environment:
+      - PORT=8088
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8088/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+
+  support-service:
+    build:
+      context: ./services/support
+      dockerfile: Dockerfile
+    ports:
+      - "8089:8089"
+    environment:
+      - PORT=8089
+    healthcheck:
+      test: [ "CMD", "wget", "--no-verbose", "--tries=1", "--spider", "http://localhost:8089/health" ]
+      interval: 10s
+      timeout: 5s
+      retries: 53
 
   # Integration Services
   google-workspace-integration:

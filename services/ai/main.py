@@ -11,6 +11,7 @@ engine = AgentEngine(config_path)
 
 class AgentExecutionRequest(BaseModel):
     prompt: str
+    session_id: str = "default"
 
 @app.get("/health")
 async def health_check():
@@ -29,10 +30,10 @@ async def get_agent(agent_id: str):
 
 @app.post("/agents/{agent_id}/execute")
 async def execute_agent(agent_id: str, req: AgentExecutionRequest):
-    result = engine.execute_agent(agent_id, req.prompt)
-    if result == "Agent not found":
-        raise HTTPException(status_code=404, detail="Agent not found")
-    return {"result": result}
+    result = engine.execute_agent(agent_id, req.prompt, req.session_id)
+    if "error" in result:
+        raise HTTPException(status_code=404, detail=result["error"])
+    return result
 
 if __name__ == "__main__":
     import uvicorn

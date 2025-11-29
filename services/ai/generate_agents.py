@@ -132,91 +132,66 @@ AGENT_CATEGORIES = {
 }
 
 def generate_agents() -> List[Dict]:
-    """Generate 1,500+ AI agents"""
+    """Generate 2,000+ AI agents"""
     agents = []
-    agent_id_counter = 1
     
-    # Model distribution (more advanced agents get better models)
-    models = {
-        "basic": "gpt-3.5-turbo",
-        "standard": "gpt-4",
-        "advanced": "gpt-4-turbo",
-        "specialized": "claude-3-opus"
-    }
+    # Define level variants with appropriate models
+    variants = [
+        ("Junior", "gemini-2.5-flash"),
+        ("Standard", "gemini-2.5-pro"),
+        ("Senior", "llama-4"),
+        ("Lead", "claude-4.5-sonnet"),
+        ("Manager", "gemini-3-pro"),
+        ("Specialist", "claude-4.5-sonnet"),
+        ("Analyst", "gemini-3-ultra"),
+        ("Coordinator", "gemini-2.5-flash"),
+        ("Director", "claude-4.5-opus"),
+        ("VP", "claude-4.5-opus")
+    ]
     
     for category, subcategories in AGENT_CATEGORIES.items():
-        for i, subcategory in enumerate(subcategories):
-            # Determine model based on agent type
-            if "Analysis" in subcategory or "Strategy" in subcategory or "Advisory" in subcategory:
-                model = models["advanced"]
-            elif "Support" in subcategory or "Scheduling" in subcategory or "Tracking" in subcategory:
-                model = models["basic"]
-            elif "Management" in subcategory or "Planning" in subcategory:
-                model = models["standard"]
-            else:
-                model = models["standard"]
-            
-            # Generate multiple variants for each subcategory
-            for variant_num in range(1, 6):  # 5 variants per subcategory
-                agent_id = f"{category.lower()}_{subcategory.lower().replace(' ', '_')}_{variant_num}"
-                
-                # Capability mapping
-                capabilities = []
-                if "Analysis" in subcategory:
-                    capabilities = ["data_analysis", "reporting", "insights"]
-                elif "Management" in subcategory:
-                    capabilities = ["coordination", "tracking", "optimization"]
-                elif "Support" in subcategory:
-                    capabilities = ["assistance", "troubleshooting", "guidance"]
-                elif "Planning" in subcategory:
-                    capabilities = ["forecasting", "scheduling", "resource_allocation"]
-                elif "Monitoring" in subcategory:
-                    capabilities = ["tracking", "alerting", "diagnostics"]
-                else:
-                    capabilities = ["automation", "processing", "coordination"]
+        for subcategory in subcategories:
+            # Generate 10 variants for each subcategory
+            for level, model in variants:
+                # Create a unique ID
+                safe_cat = category.lower().replace(" ", "_")
+                safe_sub = subcategory.lower().replace(" ", "_")
+                safe_level = level.lower()
+                agent_id = f"{safe_cat}_{safe_sub}_{safe_level}"
                 
                 agent = {
                     "id": agent_id,
-                    "name": f"{subcategory} Agent {variant_num}",
+                    "name": f"{level} {subcategory} Agent",
                     "role": category,
-                    "description": f"Specialized {category.lower()} agent for {subcategory.lower()} - variant {variant_num}",
-                    "capabilities": capabilities,
+                    "description": f"A {level}-level AI agent specialized in {subcategory} for the {category} department.",
+                    "capabilities": [
+                        "conversation",
+                        "task_execution",
+                        f"{safe_sub}_analysis",
+                        f"{safe_sub}_reporting"
+                    ],
                     "model": model
                 }
-                
                 agents.append(agent)
-                agent_id_counter += 1
     
-    print(f"Generated {len(agents)} agents across {len(AGENT_CATEGORIES)} categories")
     return agents
 
 def main():
-    """Main function to generate and save agents"""
+    import os
     agents = generate_agents()
-    
     output = {
         "version": "1.0",
-        "total_agents": len(agents),
-        "categories": list(AGENT_CATEGORIES.keys()),
+        "count": len(agents),
         "agents": agents
     }
     
-    # Save to file
-    with open("agents.json", "w") as f:
+    # Ensure directory exists
+    os.makedirs("config", exist_ok=True)
+    
+    with open("config/agents.json", "w") as f:
         json.dump(output, f, indent=2)
     
-    print(f"\n✅ Successfully generated {len(agents)} agents!")
-    print(f"📁 Saved to agents.json")
-    print(f"\n📊 Agent Distribution:")
-    
-    # Print distribution
-    category_counts = {}
-    for agent in agents:
-        category = agent["role"]
-        category_counts[category] = category_counts.get(category, 0) + 1
-    
-    for category, count in sorted(category_counts.items()):
-        print(f"  - {category}: {count} agents")
+    print(f"Successfully generated {len(agents)} agents in config/agents.json")
 
 if __name__ == "__main__":
     main()
