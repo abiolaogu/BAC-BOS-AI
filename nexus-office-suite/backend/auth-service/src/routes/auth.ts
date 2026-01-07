@@ -4,13 +4,29 @@ import { AuthService } from '../services/auth.service';
 import { MFAService } from '../services/mfa.service';
 import { authenticate } from '../middleware/auth';
 import { logger } from '../middleware/logger';
+import { validatePassword } from '../utils/security';
 
 const router = Router();
+
+// Strong password validation pattern:
+// - Minimum 8 characters (12+ recommended)
+// - At least one uppercase letter
+// - At least one lowercase letter
+// - At least one number
+// - At least one special character
+const strongPasswordPattern = /^(?=.*[a-z])(?=.*[A-Z])(?=.*\d)(?=.*[!@#$%^&*()_+\-=\[\]{};':"\\|,.<>\/?]).{8,}$/;
 
 // Validation schemas
 const registerSchema = Joi.object({
   email: Joi.string().email().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string()
+    .min(8)
+    .pattern(strongPasswordPattern)
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'string.min': 'Password must be at least 8 characters long',
+    }),
   firstName: Joi.string().required(),
   lastName: Joi.string().required(),
   tenantId: Joi.string().optional(),
@@ -31,12 +47,26 @@ const resetPasswordRequestSchema = Joi.object({
 
 const resetPasswordSchema = Joi.object({
   token: Joi.string().required(),
-  password: Joi.string().min(8).required(),
+  password: Joi.string()
+    .min(8)
+    .pattern(strongPasswordPattern)
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'string.min': 'Password must be at least 8 characters long',
+    }),
 });
 
 const changePasswordSchema = Joi.object({
   currentPassword: Joi.string().required(),
-  newPassword: Joi.string().min(8).required(),
+  newPassword: Joi.string()
+    .min(8)
+    .pattern(strongPasswordPattern)
+    .required()
+    .messages({
+      'string.pattern.base': 'Password must contain at least one uppercase letter, one lowercase letter, one number, and one special character',
+      'string.min': 'Password must be at least 8 characters long',
+    }),
 });
 
 export default (authService: AuthService, mfaService: MFAService) => {

@@ -5,9 +5,9 @@ services:
   postgres:
     image: postgres:15-alpine
     environment:
-      POSTGRES_USER: postgres
-      POSTGRES_PASSWORD: postgres
-      POSTGRES_DB: nexus
+      POSTGRES_USER: ${POSTGRES_USER:-postgres}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:-postgres}
+      POSTGRES_DB: ${POSTGRES_DB:-nexus}
     ports:
       - "5432:5432"
     volumes:
@@ -58,8 +58,8 @@ services:
       - "9000:9000"
       - "9001:9001"
     environment:
-      MINIO_ROOT_USER: minioadmin
-      MINIO_ROOT_PASSWORD: minioadmin
+      MINIO_ROOT_USER: ${MINIO_ROOT_USER:-minioadmin}
+      MINIO_ROOT_PASSWORD: ${MINIO_ROOT_PASSWORD:-minioadmin}
     command: server /data --console-address ":9001"
     volumes:
       - minio_data:/data
@@ -78,7 +78,7 @@ services:
       - "8080:8080"
     environment:
       - PORT=8080
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/nexus?sslmode=disable
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-nexus}?sslmode=disable
       - REDIS_URL=redis://redis:6379
       - KAFKA_BROKERS=redpanda:9092
     depends_on:
@@ -102,7 +102,7 @@ services:
       - "8081:8081"
     environment:
       - PORT=8081
-      - DATABASE_URL=postgres://postgres:postgres@postgres:5432/nexus?sslmode=disable
+      - DATABASE_URL=postgres://${POSTGRES_USER:-postgres}:${POSTGRES_PASSWORD:-postgres}@postgres:5432/${POSTGRES_DB:-nexus}?sslmode=disable
       - KAFKA_BROKERS=redpanda:9092
     depends_on:
       postgres:
@@ -233,7 +233,7 @@ services:
       context: ./bac-platform/services/integrations/google-workspace
       dockerfile: Dockerfile
     ports:
-      - "8083:8080"
+      - "8090:8080"  # Changed from 8083 to avoid conflict with documents-service
     environment:
       - PORT=8080
       - GOOGLE_CREDENTIALS_JSON=${GOOGLE_CREDENTIALS_JSON}
@@ -248,7 +248,7 @@ services:
       context: ./bac-platform/services/integrations/odoo
       dockerfile: Dockerfile
     ports:
-      - "8084:8081"
+      - "8091:8081"  # Changed from 8084 to avoid conflict with hr-service
     environment:
       - PORT=8081
       - ODOO_BASE_URL=${ODOO_BASE_URL:-https://demo.odoo.com}
@@ -266,7 +266,7 @@ services:
       context: ./bac-platform/services/integrations/zoho
       dockerfile: Dockerfile
     ports:
-      - "8085:8082"
+      - "8092:8082"  # Changed from 8085 to avoid conflict with inventory-service
     environment:
       - PORT=8082
       - ZOHO_BASE_URL=https://www.zohoapis.com
@@ -299,7 +299,8 @@ services:
     ports:
       - "3001:3000"
     environment:
-      - GF_SECURITY_ADMIN_PASSWORD=admin
+      - GF_SECURITY_ADMIN_USER=${GRAFANA_ADMIN_USER:-admin}
+      - GF_SECURITY_ADMIN_PASSWORD=${GRAFANA_ADMIN_PASSWORD:-admin}
       - GF_INSTALL_PLUGINS=grafana-piechart-panel
     volumes:
       - grafana_data:/var/lib/grafana

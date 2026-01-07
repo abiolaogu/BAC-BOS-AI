@@ -1,10 +1,11 @@
 import jwt from 'jsonwebtoken';
-import { v4 as uuidv4 } from 'uuid';
 import { User } from '../models/user';
+import { getJwtSecret, getJwtRefreshSecret, generateSecureToken } from '../utils/security';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+// Get JWT secrets with proper validation - no hardcoded fallbacks
+const JWT_SECRET = getJwtSecret();
 const JWT_EXPIRES_IN = process.env.JWT_EXPIRES_IN || '1h';
-const JWT_REFRESH_SECRET = process.env.JWT_REFRESH_SECRET || 'your-super-secret-refresh-key-change-this-in-production';
+const JWT_REFRESH_SECRET = getJwtRefreshSecret();
 
 export interface TokenPayload {
   userId: string;
@@ -29,9 +30,8 @@ export class TokenService {
   }
 
   generateRefreshToken(): string {
-    // Simple UUID for refresh token
-    // In production, you might want to use JWT with longer expiration
-    return uuidv4();
+    // Use cryptographically secure random token
+    return generateSecureToken(32);
   }
 
   verifyAccessToken(token: string): TokenPayload | null {
