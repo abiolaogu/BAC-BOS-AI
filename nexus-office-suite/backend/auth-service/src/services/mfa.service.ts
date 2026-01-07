@@ -1,6 +1,7 @@
 import { authenticator } from 'otplib';
 import qrcode from 'qrcode';
 import { UserModel } from '../models/user';
+import { generateSecureBackupCodes } from '../utils/security';
 
 const MFA_ISSUER = process.env.MFA_ISSUER || 'NEXUS Office Suite';
 
@@ -76,14 +77,10 @@ export class MFAService {
   }
 
   async generateBackupCodes(userId: string): Promise<string[]> {
-    // Generate 10 backup codes
-    const codes: string[] = [];
-    for (let i = 0; i < 10; i++) {
-      const code = Math.random().toString(36).substring(2, 10).toUpperCase();
-      codes.push(code);
-    }
+    // Generate 10 cryptographically secure backup codes
+    const codes = generateSecureBackupCodes(10);
 
-    // In a real implementation, you'd store hashed versions of these codes
+    // TODO: Store hashed versions of these codes in the database
     // For now, we'll just return them
 
     return codes;

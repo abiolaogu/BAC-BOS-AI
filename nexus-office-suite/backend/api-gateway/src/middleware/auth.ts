@@ -1,8 +1,10 @@
 import { Request, Response, NextFunction } from 'express';
 import jwt from 'jsonwebtoken';
 import { logger } from './logger';
+import { getJwtSecret } from '../utils/security';
 
-const JWT_SECRET = process.env.JWT_SECRET || 'your-super-secret-jwt-key-change-this-in-production';
+// Get JWT secret with proper validation - no hardcoded fallback
+const JWT_SECRET = getJwtSecret();
 
 export interface AuthPayload {
   userId: string;

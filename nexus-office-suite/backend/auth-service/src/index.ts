@@ -14,8 +14,13 @@ import authRoutes from './routes/auth';
 import oauthRoutes from './routes/oauth';
 import mfaRoutes from './routes/mfa';
 import { logger, requestLogger } from './middleware/logger';
+import { validateSecurityConfig } from './utils/security';
 
+// Load environment variables
 config();
+
+// Validate security configuration at startup
+validateSecurityConfig();
 
 const app = express();
 const PORT = process.env.PORT || 3001;
@@ -46,11 +51,51 @@ const emailService = new EmailService();
 const mfaService = new MFAService(userModel);
 const authService = new AuthService(userModel, sessionModel, tokenService, emailService);
 
-// Middleware
-app.use(helmet());
+// Middleware - Enhanced Security Headers
+app.use(helmet({
+  contentSecurityPolicy: {
+    directives: {
+      defaultSrc: ["'self'"],
+      scriptSrc: ["'self'"],
+      styleSrc: ["'self'", "'unsafe-inline'"],
+      imgSrc: ["'self'", 'data:', 'https:'],
+      connectSrc: ["'self'"],
+      fontSrc: ["'self'"],
+      objectSrc: ["'none'"],
+      mediaSrc: ["'self'"],
+      frameSrc: ["'none'"],
+    },
+  },
+  crossOriginEmbedderPolicy: true,
+  crossOriginOpenerPolicy: true,
+  crossOriginResourcePolicy: { policy: 'same-origin' },
+  dnsPrefetchControl: { allow: false },
+  frameguard: { action: 'deny' },
+  hidePoweredBy: true,
+  hsts: {
+    maxAge: 31536000, // 1 year
+    includeSubDomains: true,
+    preload: true,
+  },
+  ieNoOpen: true,
+  noSniff: true,
+  originAgentCluster: true,
+  permittedCrossDomainPolicies: { permittedPolicies: 'none' },
+  referrerPolicy: { policy: 'strict-origin-when-cross-origin' },
+  xssFilter: true,
+}));
+
+// CORS configuration - require explicit origins in production
+const corsOrigins = process.env.CORS_ORIGIN?.split(',');
+if (!corsOrigins && process.env.NODE_ENV === 'production') {
+  logger.warn('CORS_ORIGIN not set in production. Using restrictive defaults.');
+}
 app.use(cors({
-  origin: process.env.CORS_ORIGIN?.split(',') || ['http://localhost:3000'],
+  origin: corsOrigins || (process.env.NODE_ENV === 'production' ? false : ['http://localhost:3000']),
   credentials: true,
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'PATCH', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-Requested-With'],
+  maxAge: 86400, // 24 hours
 }));
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
