@@ -33,3 +33,7 @@ Thumbs.db
 
 # Git
 .git/index.lock
+web/dist/
+*.tsbuildinfo
+.dart_tool/
+**/.dart_tool/
